@@ -69,7 +69,6 @@ typedef enum {
 static void DrawIconPath(IconType icon, Rectangle rect, Color color, float th) {
   float cx = rect.x + rect.width / 2;
   float cy = rect.y + rect.height / 2;
-  float s = rect.width * 0.5f;
 
   switch (icon) {
   case ICON_MENU:
@@ -218,7 +217,6 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
 
   // "Tab" -> Untitled Sketch
   // x pos approx 90
-  Rectangle tabRect = {90, 8, 140, 32};
   // Draw tab shape (rounded top)
   DrawRectangleRounded((Rectangle){90, 8, 140, 40}, 0.3f, 4,
                        (Color){0, 0, 0, 30}); // dark background for tab?
