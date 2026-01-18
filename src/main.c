@@ -8,6 +8,7 @@ int main(void) {
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
   InitWindow(screenWidth, screenHeight, "cdraw - Vector Drawing");
+  SetExitKey(KEY_NULL);
 
   Canvas canvas;
   InitCanvas(&canvas, screenWidth, screenHeight);
@@ -17,7 +18,7 @@ int main(void) {
 
   SetTargetFPS(60);
 
-  while (!WindowShouldClose()) {
+  while (!WindowShouldClose() && !gui.requestExit) {
     // Update
     bool mouseOverGui = IsMouseOverGui(&gui);
 
@@ -31,6 +32,7 @@ int main(void) {
     EndDrawing();
   }
 
+  UnloadGui(&gui);
   FreeCanvas(&canvas);
   CloseWindow();
 

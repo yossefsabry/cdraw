@@ -7,6 +7,7 @@
 typedef enum {
   TOOL_PEN = 0,
   TOOL_ERASER,
+  TOOL_SELECT,
   TOOL_PAN,
   TOOL_LINE,
   TOOL_RECT,
@@ -43,6 +44,16 @@ typedef struct {
   Point startPoint; // Store start point explicitly for shapes
   bool showGrid;
   Stroke currentStroke;
+
+  // Theme
+  Color backgroundColor;
+  Color gridColor;
+  Color selectionColor;
+
+  // Selection
+  int selectedStrokeIndex;
+  bool isDraggingSelection;
+  Vector2 lastMouseWorld;
 } Canvas;
 
 void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight);
@@ -53,5 +64,8 @@ void AddStroke(Canvas *canvas, Stroke stroke);
 void Undo(Canvas *canvas);
 void Redo(Canvas *canvas);
 void ClearCanvas(Canvas *canvas);
+bool SaveCanvasToFile(const Canvas *canvas, const char *path);
+bool LoadCanvasFromFile(Canvas *canvas, const char *path);
+int GetTotalPoints(const Canvas *canvas);
 
 #endif // CANVAS_H

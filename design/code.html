@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Infinite Canvas Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Kalam:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#38bdf8", // Sky blue accent color
+                        "background-light": "#f3f4f6",
+                        "background-dark": "#18181b",
+                        "surface-dark": "#27272a",
+                        "canvas-dark": "#121212",
+                        "canvas-grid": "#2a2a2a",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        handwriting: ["Kalam", "cursive"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>.grid-background {
+            background-image: 
+                linear-gradient(to right, #2a2a2a 1px, transparent 1px),
+                linear-gradient(to bottom, #2a2a2a 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .light-grid-background {
+            background-image: 
+                linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+                linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+            background-size: 40px 40px;
+        }::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #52525b; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #71717a; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-display h-screen w-screen overflow-hidden flex flex-col selection:bg-primary selection:text-white transition-colors duration-200">
+<div class="flex-1 flex flex-col relative h-full w-full">
+<header class="h-10 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-3 select-none z-50">
+<div class="flex items-center space-x-2">
+<div class="flex space-x-1.5 mr-4 opacity-60 hover:opacity-100 transition-opacity">
+<div class="w-3 h-3 rounded-full bg-red-500"></div>
+<div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+<div class="w-3 h-3 rounded-full bg-green-500"></div>
+</div>
+<div class="flex items-center space-x-2 bg-gray-100 dark:bg-black/30 px-3 py-1 rounded-t-md border-t border-x border-gray-200 dark:border-gray-700 text-xs font-medium relative top-[1px]">
+<span class="material-symbols-outlined text-sm text-primary">edit_note</span>
+<span>Untitled Sketch</span>
+<button class="hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full p-0.5 ml-2">
+<span class="material-symbols-outlined text-[10px]">close</span>
+</button>
+</div>
+<button class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 dark:text-gray-500">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<div class="text-xs text-gray-400 dark:text-gray-500 font-mono">Lorien v0.6.0</div>
+<div class="flex items-center space-x-3">
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined text-sm">dark_mode</span>
+</button>
+<span class="material-symbols-outlined text-sm text-gray-400">minimize</span>
+<span class="material-symbols-outlined text-sm text-gray-400">check_box_outline_blank</span>
+<span class="material-symbols-outlined text-sm text-gray-400">close</span>
+</div>
+</header>
+<div class="h-12 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-gray-700 flex items-center px-4 space-x-4 shadow-sm z-40">
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex items-center space-x-1">
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Open">
+<span class="material-symbols-outlined text-xl">folder_open</span>
+</button>
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Save">
+<span class="material-symbols-outlined text-xl">save</span>
+</button>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex items-center space-x-1">
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Undo">
+<span class="material-symbols-outlined text-xl">undo</span>
+</button>
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Redo">
+<span class="material-symbols-outlined text-xl">redo</span>
+</button>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex items-center bg-gray-100 dark:bg-black/20 rounded p-1 space-x-1">
+<button class="p-1.5 rounded bg-white dark:bg-gray-600 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10" title="Brush">
+<span class="material-symbols-outlined text-xl">brush</span>
+</button>
+<button class="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors" title="Rectangle">
+<span class="material-symbols-outlined text-xl">crop_square</span>
+</button>
+<button class="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors" title="Circle">
+<span class="material-symbols-outlined text-xl">radio_button_unchecked</span>
+</button>
+<button class="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors" title="Line">
+<span class="material-symbols-outlined text-xl">remove</span>
+</button>
+<button class="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors" title="Eraser">
+<span class="material-symbols-outlined text-xl">ink_eraser</span>
+</button>
+<button class="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors" title="Select">
+<span class="material-symbols-outlined text-xl">select_all</span>
+</button>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2 bg-gray-100 dark:bg-black/20 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 cursor-pointer">
+<div class="w-4 h-4 rounded-sm bg-white border border-gray-300"></div>
+<span class="text-xs font-mono text-gray-600 dark:text-gray-300">#FFFFFF</span>
+</div>
+<div class="flex items-center space-x-2 group">
+<span class="material-symbols-outlined text-gray-400 text-sm">circle</span>
+<input class="w-24 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer dark:bg-gray-600 accent-primary" max="50" min="1" type="range" value="12"/>
+<span class="text-xs font-mono text-gray-500 dark:text-gray-400 min-w-[1.5rem]">12</span>
+</div>
+</div>
+<div class="flex-1"></div>
+<div class="flex items-center space-x-2">
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Toggle Grid">
+<span class="material-symbols-outlined text-xl">grid_4x4</span>
+</button>
+<button class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="Fullscreen">
+<span class="material-symbols-outlined text-xl">fullscreen</span>
+</button>
+</div>
+</div>
+<main class="flex-1 relative overflow-hidden bg-white dark:bg-canvas-dark grid-background dark:grid-background cursor-crosshair">
+<div class="absolute inset-0 light-grid-background dark:hidden pointer-events-none"></div>
+<div class="absolute inset-0 pointer-events-none transform translate-x-20 translate-y-10 scale-100 origin-top-left">
+<div class="absolute top-20 left-20">
+<h1 class="font-handwriting text-8xl text-primary font-bold tracking-tighter" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.5);">Lorien</h1>
+<div class="w-48 h-2 bg-primary mt-[-10px] ml-4 rounded-full opacity-80 transform -rotate-2"></div>
+</div>
+<div class="absolute top-24 left-[400px]">
+<div class="border-2 border-white dark:border-white border-gray-800 p-6 transform rotate-1 rounded-sm relative">
+<svg class="absolute inset-0 w-full h-full overflow-visible" style="margin: -2px;">
+<rect class="text-gray-800 dark:text-white" fill="none" height="100%" stroke="currentColor" stroke-linecap="round" stroke-width="2" width="100%" x="0" y="0"></rect>
+<path class="text-gray-800 dark:text-white opacity-50" d="M2,2 L100%,4 L98%,98% L3,96% Z" fill="none" stroke="currentColor" stroke-width="1"></path>
+</svg>
+<h2 class="font-handwriting text-5xl text-red-500 font-bold mb-2">INFINITE</h2>
+<h2 class="font-handwriting text-5xl text-red-500 font-bold ml-24">CANVAS</h2>
+</div>
+</div>
+<div class="absolute top-64 left-20">
+<div class="border-2 border-gray-800 dark:border-gray-300 w-64 h-48 relative bg-transparent rounded-sm">
+<div class="absolute top-0 left-24 w-12 h-20 border-l-2 border-b-2 border-r-2 border-gray-800 dark:border-gray-300 bg-gray-100 dark:bg-white/5">
+<div class="w-full h-full opacity-20" style="background: repeating-linear-gradient(45deg, transparent, transparent 5px, currentColor 5px, currentColor 6px);"></div>
+</div>
+<div class="absolute bottom-0 right-0 w-32 h-24 border-l-2 border-t-2 border-gray-800 dark:border-gray-300 bg-gray-100 dark:bg-white/5">
+<div class="w-full h-full opacity-20" style="background: repeating-linear-gradient(45deg, transparent, transparent 5px, currentColor 5px, currentColor 6px);"></div>
+</div>
+<svg class="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
+<path d="M40,160 L120,80 L140,80 L140,120 L180,120 L220,60" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<circle cx="40" cy="160" fill="#38bdf8" r="4"></circle>
+<circle cx="120" cy="80" fill="#38bdf8" r="4"></circle>
+<circle cx="140" cy="80" fill="#38bdf8" r="4"></circle>
+<circle cx="140" cy="120" fill="#38bdf8" r="4"></circle>
+<circle cx="180" cy="120" fill="#38bdf8" r="4"></circle>
+<circle cx="220" cy="60" fill="#38bdf8" r="4"></circle>
+<circle cx="40" cy="160" fill="none" r="10" stroke="#ef4444" stroke-width="2"></circle>
+<path d="M34,154 L46,166 M46,154 L34,166" stroke="#ef4444" stroke-width="2"></path>
+<circle cx="220" cy="60" fill="none" r="10" stroke="#ef4444" stroke-width="2"></circle>
+<path d="M214,54 L226,66 M226,54 L214,66" stroke="#ef4444" stroke-width="2"></path>
+</svg>
+<div class="absolute -bottom-8 left-6 text-red-500 font-handwriting text-xl font-bold flex flex-col items-center">
+<span class="material-symbols-outlined text-2xl rotate-180 transform -translate-y-1">arrow_upward</span>
+<span class="-mt-1">START</span>
+</div>
+<div class="absolute top-10 -right-16 text-red-500 font-handwriting text-xl font-bold flex items-center">
+<span class="material-symbols-outlined text-2xl rotate-[220deg] transform translate-y-2 mr-1">arrow_forward</span>
+<span>FINISH</span>
+</div>
+</div>
+</div>
+<div class="absolute top-64 left-[400px]">
+<p class="font-handwriting text-3xl text-gray-700 dark:text-gray-200 w-full max-w-lg leading-relaxed">
+                        "The quick brown fox jumps over the lazy dog."
+                    </p>
+</div>
+<div class="absolute top-[500px] left-40">
+<svg class="overflow-visible" height="200" viewBox="0 0 300 200" width="300">
+<line stroke="#38bdf8" stroke-width="2" x1="40" x2="100" y1="150" y2="100"></line>
+<line stroke="#94a3b8" stroke-width="2" x1="100" x2="150" y1="100" y2="100"></line>
+<line stroke="#94a3b8" stroke-width="2" x1="100" x2="150" y1="100" y2="150"></line>
+<line stroke="#94a3b8" stroke-width="2" x1="150" x2="150" y1="100" y2="50"></line>
+<line stroke="#38bdf8" stroke-width="2" x1="150" x2="220" y1="50" y2="50"></line>
+<line stroke="#94a3b8" stroke-width="2" x1="220" x2="200" y1="50" y2="100"></line>
+<line stroke="#94a3b8" stroke-width="2" x1="200" x2="200" y1="100" y2="150"></line>
+<g transform="translate(40,150)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="20" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-2xl fill-gray-800 dark:fill-white font-bold" text-anchor="middle" x="0" y="5">S</text>
+<path class="text-gray-800 dark:text-white stroke-2" d="M-15,5 Q0,25 15,5" fill="none" stroke="currentColor"></path>
+</g>
+<g transform="translate(100,100)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">1</text>
+</g>
+<g transform="translate(150,100)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">2</text>
+</g>
+<g transform="translate(150,150)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">3</text>
+</g>
+<g transform="translate(150,50)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">6</text>
+</g>
+<g transform="translate(220,50)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="18" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-xl fill-gray-800 dark:fill-white font-bold" text-anchor="middle" x="0" y="5">T</text>
+<line class="stroke-gray-800 dark:stroke-white" stroke="currentColor" x1="-18" x2="18" y1="0" y2="0"></line>
+</g>
+<g transform="translate(200,100)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">5</text>
+</g>
+<g transform="translate(200,150)">
+<circle class="stroke-gray-800 dark:stroke-white" fill="none" r="12" stroke="white" stroke-width="2"></circle>
+<text class="font-handwriting text-sm fill-gray-800 dark:fill-white" text-anchor="middle" x="0" y="5">4</text>
+</g>
+</svg>
+</div>
+<div class="absolute top-[450px] left-[500px] flex items-center space-x-12">
+<div class="relative">
+<svg height="140" viewBox="0 0 100 100" width="140">
+<path class="text-gray-800 dark:text-white" d="M50,50 L85,25 A45,45 0 1,0 85,75 Z" fill="none" stroke="currentColor" stroke-width="2"></path>
+<circle class="text-gray-800 dark:text-white" cx="50" cy="25" fill="currentColor" r="3"></circle>
+</svg>
+<div class="absolute top-1/2 -right-4 w-10 h-10 border border-gray-800 dark:border-white transform -translate-y-1/2 rotate-12 bg-transparent">
+<div class="absolute top-0 right-0 w-full h-full border border-gray-800 dark:border-white transform -translate-x-2 -translate-y-2"></div>
+<line class="border-l border-gray-800 dark:border-white h-2 w-px absolute bottom-0 left-0 transform rotate-45 origin-bottom-left" x1="0" x2="-8px" y1="100%" y2="calc(100% - 8px)"></line>
+</div>
+</div>
+<svg class="text-gray-800 dark:text-white overflow-visible" height="100" viewBox="0 0 100 100" width="100">
+<path d="M50,20 L80,35 L80,70 L50,85 L20,70 L20,35 Z" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path d="M50,50 L80,35 M50,50 L20,35 M50,50 L50,85" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path class="opacity-50" d="M20,35 L50,20 L80,35 L50,50 Z" fill="none" stroke="currentColor" stroke-width="1"></path>
+</svg>
+<svg class="text-gray-800 dark:text-white overflow-visible mb-12" height="80" viewBox="0 0 100 100" width="80">
+<path d="M50,20 L80,35 L80,70 L50,85 L20,70 L20,35 Z" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path d="M50,50 L80,35 M50,50 L20,35 M50,50 L50,85" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path class="opacity-30" d="M50,20 L50,50" fill="none" stroke="currentColor" stroke-width="1"></path>
+</svg>
+</div>
+</div>
+<footer class="absolute bottom-0 left-0 right-0 h-7 bg-white/90 dark:bg-canvas-dark/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 text-[10px] font-mono text-gray-500 dark:text-gray-400 select-none">
+<div class="flex space-x-4">
+<span>Position: -66, -197</span>
+<span>|</span>
+<span>Zoom: 1.2</span>
+<span>|</span>
+<span>Pressure: -</span>
+<span>|</span>
+<span>FPS: 60</span>
+</div>
+<div class="flex space-x-4">
+<span>Strokes: 253</span>
+<span>|</span>
+<span>Points: 2620</span>
+</div>
+</footer>
+<div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full shadow-lg px-4 py-2 flex items-center space-x-4 transition-all hover:scale-105">
+<div class="w-6 h-6 rounded-full bg-black dark:bg-white cursor-pointer ring-2 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark ring-gray-300 dark:ring-gray-600"></div>
+<div class="w-6 h-6 rounded-full bg-red-500 cursor-pointer"></div>
+<div class="w-6 h-6 rounded-full bg-blue-500 cursor-pointer"></div>
+<div class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer"></div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+<button class="text-gray-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">palette</span>
+</button>
+</div>
+</main>
+</div>
+<script>
+        // Simple dark mode init to match system or default
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+</body></html>
