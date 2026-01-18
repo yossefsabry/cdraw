@@ -18,16 +18,52 @@ static void CreateCircleStroke(Stroke *s, Point start, Point end) {
   float dx = end.x - start.x;
   float dy = end.y - start.y;
   float radius = sqrtf(dx * dx + dy * dy);
-  for (int i = 0; i <= 64; i++) {
-    float a = (float)i / 64.0f * PI * 2.0f;
+
+  const int segments = 64;
+  for (int i = 0; i < segments; i++) {
+    float a = (float)i / (float)segments * PI * 2.0f;
     AddPoint(s, (Point){c.x + cosf(a) * radius, c.y + sinf(a) * radius});
   }
+
+  // Close the loop exactly (avoid float drift between 0 and 2*PI).
+  if (s->pointCount > 0)
+    AddPoint(s, s->points[0]);
+}
+
+static void CreateArrowStroke(Stroke *s, Point start, Point end, float thickness) {
+  Vector2 a = {start.x, start.y};
+  Vector2 b = {end.x, end.y};
+  Vector2 ab = Vector2Subtract(b, a);
+  float len = Vector2Length(ab);
+
+  AddPoint(s, start);
+  if (len <= 0.0001f) {
+    AddPoint(s, end);
+    return;
+  }
+
+  Vector2 dir = Vector2Scale(ab, 1.0f / len);
+  Vector2 perp = (Vector2){-dir.y, dir.x};
+
+  float headLen = fmaxf(16.0f, thickness * 4.0f);
+  headLen = fminf(headLen, len * 0.5f);
+  float headW = fmaxf(thickness * 3.0f, headLen * 1.10f);
+
+  Vector2 base = Vector2Subtract(b, Vector2Scale(dir, headLen));
+  Vector2 left = Vector2Add(base, Vector2Scale(perp, headW * 0.5f));
+  Vector2 right = Vector2Subtract(base, Vector2Scale(perp, headW * 0.5f));
+
+  AddPoint(s, end);
+  AddPoint(s, (Point){left.x, left.y});
+  AddPoint(s, (Point){right.x, right.y});
+  AddPoint(s, end);
 }
 
 void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanning,
                                 int activeTool) {
   bool drawTool = activeTool == TOOL_PEN || activeTool == TOOL_LINE ||
                   activeTool == TOOL_RECT || activeTool == TOOL_CIRCLE;
+  bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
   bool drawingInput =
       drawTool && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !isPanning && !inputCaptured;
 
@@ -49,6 +85,13 @@ void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanni
     }
 
     Stroke *s = &canvas->currentStroke;
+    if (activeTool == TOOL_PEN && shift) {
+      s->pointCount = 0;
+      Point start = canvas->startPoint;
+      AddPoint(s, start);
+      AddPoint(s, p);
+      return;
+    }
     if (activeTool == TOOL_PEN) {
       Point last = s->points[s->pointCount - 1];
       float dx = p.x - last.x;
@@ -61,8 +104,7 @@ void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanni
     s->pointCount = 0;
     Point start = canvas->startPoint;
     if (activeTool == TOOL_LINE) {
-      AddPoint(s, start);
-      AddPoint(s, p);
+      CreateArrowStroke(s, start, p, canvas->currentStroke.thickness);
     } else if (activeTool == TOOL_RECT) {
       AddPoint(s, start);
       AddPoint(s, (Point){p.x, start.y});
@@ -91,4 +133,3 @@ void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanni
     canvas->currentStroke.pointCount = 0;
   }
 }
-

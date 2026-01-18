@@ -29,7 +29,7 @@ void GuiIconsLoad(GuiIcons *icons) {
   LOAD(pen, "draw_pen");
   LOAD(rect, "check_box_outline");
   LOAD(circle, "circle");
-  LOAD(line, "line");
+  LOAD(line, "arrow_drawing");
   LOAD(eraser, "ink_eraser");
   LOAD(select, "arrow_selector");
   LOAD(pan, "move_");
