@@ -23,8 +23,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   float btnY = ty + (48 - btnS) / 2;
 
   gui->menuButtonRect = (Rectangle){tx, btnY, btnS, btnS};
-  if (GuiIconButton(gui->menuButtonRect, gui->icons.menu, false, t.hover, t.hover,
-                    t.text, iconIdle, iconHover)) {
+  if (GuiIconButton(&gui->icons, gui->menuButtonRect, gui->icons.menu, false,
+                    t.hover, t.hover, t.text, iconIdle, iconHover)) {
     gui->showMenu = !gui->showMenu;
     gui->menuRect.x = gui->menuButtonRect.x;
     gui->menuRect.y = gui->menuButtonRect.y + gui->menuButtonRect.height + 6;
@@ -34,8 +34,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   tx += 10;
 
   Rectangle openBtn = {tx, btnY, btnS, btnS};
-  if (GuiIconButton(openBtn, gui->icons.openFile, false, t.hover, t.hover, t.text,
-                    iconIdle, iconHover)) {
+  if (GuiIconButton(&gui->icons, openBtn, gui->icons.openFile, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover)) {
     GuiToastSet(gui,
                LoadCanvasFromFile(canvas, gui->currentFile) ? "Loaded."
                                                            : "Load failed.");
@@ -43,8 +43,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   tx += btnS;
 
   Rectangle saveBtn = {tx, btnY, btnS, btnS};
-  if (GuiIconButton(saveBtn, gui->icons.saveFile, false, t.hover, t.hover, t.text,
-                    iconIdle, iconHover)) {
+  if (GuiIconButton(&gui->icons, saveBtn, gui->icons.saveFile, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover)) {
     GuiToastSet(gui, SaveCanvasToFile(canvas, gui->currentFile) ? "Saved."
                                                                : "Save failed.");
   }
@@ -53,14 +53,14 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   tx += 10;
 
   Rectangle undoBtn = {tx, btnY, btnS, btnS};
-  if (GuiIconButton(undoBtn, gui->icons.undo, false, t.hover, t.hover, t.text,
-                    iconIdle, iconHover))
+  if (GuiIconButton(&gui->icons, undoBtn, gui->icons.undo, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover))
     Undo(canvas);
   tx += btnS;
 
   Rectangle redoBtn = {tx, btnY, btnS, btnS};
-  if (GuiIconButton(redoBtn, gui->icons.redo, false, t.hover, t.hover, t.text,
-                    iconIdle, iconHover))
+  if (GuiIconButton(&gui->icons, redoBtn, gui->icons.redo, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover))
     Redo(canvas);
   tx += btnS + 10;
   Divider(tx, ty + 10, 28, t.border);
@@ -76,8 +76,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 #define TOOLBTN(icon, tool)                                                    \
   do {                                                                         \
     Rectangle b = {gx, btnY, btnS, btnS};                                      \
-    if (GuiIconButton(b, icon, gui->activeTool == (tool), activeBg, hoverBg,   \
-                      activeIcon, iconIdle, iconHover))                        \
+    if (GuiIconButton(&gui->icons, b, icon, gui->activeTool == (tool),         \
+                      activeBg, hoverBg, activeIcon, iconIdle, iconHover))     \
       gui->activeTool = (tool);                                                \
     gx += btnS;                                                                \
   } while (0)
@@ -131,13 +131,12 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
   float rtx = (float)sw - 90;
   Rectangle gridBtn = {rtx, btnY, btnS, btnS};
-  if (GuiIconButton(gridBtn, gui->icons.grid, canvas->showGrid, t.hover, t.hover,
-                    t.primary, iconIdle, iconHover))
+  if (GuiIconButton(&gui->icons, gridBtn, gui->icons.grid, canvas->showGrid,
+                    t.hover, t.hover, t.primary, iconIdle, iconHover))
     canvas->showGrid = !canvas->showGrid;
 
   Rectangle fsBtn = {rtx + 40, btnY, btnS, btnS};
-  if (GuiIconButton(fsBtn, gui->icons.fullscreen, false, t.hover, t.hover, t.text,
-                    iconIdle, iconHover))
+  if (GuiIconButton(&gui->icons, fsBtn, gui->icons.fullscreen, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover))
     ToggleFullscreen();
 }
-

@@ -24,10 +24,11 @@ void GuiToastSet(GuiState *gui, const char *msg);
 void GuiIconsLoad(GuiIcons *icons);
 void GuiIconsUnload(GuiIcons *icons);
 
-void GuiDrawIconTexture(Texture2D tex, Rectangle bounds, Color tint);
-bool GuiIconButton(Rectangle bounds, Texture2D icon, bool active, Color bgActive,
-                   Color bgHover, Color iconActive, Color iconIdle,
-                   Color iconHover);
+void GuiDrawIconTexture(const GuiIcons *icons, GuiIcon icon, Rectangle bounds,
+                        Color tint);
+bool GuiIconButton(const GuiIcons *icons, Rectangle bounds, GuiIcon icon,
+                   bool active, Color bgActive, Color bgHover, Color iconActive,
+                   Color iconIdle, Color iconHover);
 
 void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                    Color iconHover, int sw);

@@ -7,32 +7,38 @@
 // ToolType is defined in canvas.h
 
 typedef struct {
-  Texture2D menu;
-  Texture2D add;
-  Texture2D openFile;
-  Texture2D saveFile;
-  Texture2D undo;
-  Texture2D redo;
+  Rectangle src;
+} GuiIcon;
 
-  Texture2D pen;
-  Texture2D rect;
-  Texture2D circle;
-  Texture2D line;
-  Texture2D eraser;
-  Texture2D select;
-  Texture2D pan;
+typedef struct {
+  Texture2D atlas;
 
-  Texture2D grid;
-  Texture2D fullscreen;
+  GuiIcon menu;
+  GuiIcon add;
+  GuiIcon openFile;
+  GuiIcon saveFile;
+  GuiIcon undo;
+  GuiIcon redo;
 
-  Texture2D colorPicker;
+  GuiIcon pen;
+  GuiIcon rect;
+  GuiIcon circle;
+  GuiIcon line;
+  GuiIcon eraser;
+  GuiIcon select;
+  GuiIcon pan;
 
-  Texture2D darkMode;
-  Texture2D lightMode;
+  GuiIcon grid;
+  GuiIcon fullscreen;
 
-  Texture2D windowMinimize;
-  Texture2D windowToggleSize;
-  Texture2D windowClose;
+  GuiIcon colorPicker;
+
+  GuiIcon darkMode;
+  GuiIcon lightMode;
+
+  GuiIcon windowMinimize;
+  GuiIcon windowToggleSize;
+  GuiIcon windowClose;
 } GuiIcons;
 
 typedef struct {

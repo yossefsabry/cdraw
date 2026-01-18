@@ -58,6 +58,7 @@ static void TranslateStroke(Stroke *s, Vector2 delta) {
 static void RemoveStrokeAtIndex(Canvas *canvas, int index) {
   if (index < 0 || index >= canvas->strokeCount)
     return;
+  canvas->totalPoints -= canvas->strokes[index].pointCount;
   free(canvas->strokes[index].points);
   for (int i = index; i < canvas->strokeCount - 1; i++)
     canvas->strokes[i] = canvas->strokes[i + 1];
@@ -108,4 +109,3 @@ void CanvasInputHandleEditTools(Canvas *canvas, bool inputCaptured, bool isPanni
     }
   }
 }
-

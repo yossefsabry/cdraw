@@ -2,92 +2,154 @@
 #include <math.h>
 #include <stdio.h>
 
-static Texture2D LoadIconPng(const char *basename) {
-  char path[256];
-  snprintf(path, sizeof(path), "assets/ui_icons/%s.png", basename);
-  if (!FileExists(path))
-    return (Texture2D){0};
-  return LoadTexture(path);
+typedef struct {
+  const char *name;
+  GuiIcon *icon;
+} IconEntry;
+
+static const int ICON_SIZE = 24;
+static const int ICON_PADDING = 2;
+static const int ICON_COLS = 8;
+
+static int IconCellSize(void) { return ICON_SIZE + ICON_PADDING * 2; }
+
+static void SetIconSrc(GuiIcon *icon, int index) {
+  int cell = IconCellSize();
+  int cx = (index % ICON_COLS) * cell;
+  int cy = (index / ICON_COLS) * cell;
+  icon->src = (Rectangle){(float)(cx + ICON_PADDING), (float)(cy + ICON_PADDING),
+                          (float)ICON_SIZE, (float)ICON_SIZE};
 }
 
-static void UnloadIcon(Texture2D *tex) {
-  if (tex->id != 0)
-    UnloadTexture(*tex);
-  *tex = (Texture2D){0};
+static void IconPath(char *buf, size_t bufSize, const char *basename) {
+  snprintf(buf, bufSize, "assets/ui_icons/%s.png", basename);
+}
+
+static bool AtlasIsStale(const char *atlasPath, const IconEntry entries[],
+                         int count) {
+  if (!FileExists(atlasPath))
+    return true;
+
+  long atlasTime = GetFileModTime(atlasPath);
+  if (atlasTime <= 0)
+    return true;
+
+  char path[256];
+  for (int i = 0; i < count; i++) {
+    IconPath(path, sizeof(path), entries[i].name);
+    if (!FileExists(path))
+      continue;
+    long iconTime = GetFileModTime(path);
+    if (iconTime > atlasTime)
+      return true;
+  }
+  return false;
+}
+
+static Texture2D BuildAtlas(const char *atlasPath, const IconEntry entries[],
+                            int count) {
+  int cell = IconCellSize();
+  int rows = (count + ICON_COLS - 1) / ICON_COLS;
+  Image atlas =
+      GenImageColor(ICON_COLS * cell, rows * cell, (Color){0, 0, 0, 0});
+
+  for (int i = 0; i < count; i++) {
+    char path[256];
+    IconPath(path, sizeof(path), entries[i].name);
+    if (!FileExists(path))
+      continue;
+
+    Image icon = LoadImage(path);
+    if (icon.data == NULL)
+      continue;
+    if (icon.width != ICON_SIZE || icon.height != ICON_SIZE)
+      ImageResize(&icon, ICON_SIZE, ICON_SIZE);
+
+    Rectangle src = {0, 0, (float)icon.width, (float)icon.height};
+    int cx = (i % ICON_COLS) * cell;
+    int cy = (i / ICON_COLS) * cell;
+    Rectangle dst = {(float)(cx + ICON_PADDING), (float)(cy + ICON_PADDING),
+                     (float)ICON_SIZE, (float)ICON_SIZE};
+    ImageDraw(&atlas, icon, src, dst, WHITE);
+    UnloadImage(icon);
+  }
+
+  // Best-effort on-disk cache for faster startup on subsequent runs.
+  (void)ExportImage(atlas, atlasPath);
+
+  Texture2D tex = LoadTextureFromImage(atlas);
+  UnloadImage(atlas);
+  return tex;
 }
 
 void GuiIconsLoad(GuiIcons *icons) {
   *icons = (GuiIcons){0};
 
-#define LOAD(field, name) icons->field = LoadIconPng(name)
-  LOAD(menu, "menu");
-  LOAD(add, "add");
-  LOAD(openFile, "load_file");
-  LOAD(saveFile, "save");
-  LOAD(undo, "chevron_left");
-  LOAD(redo, "arrow_forward");
-  LOAD(pen, "draw_pen");
-  LOAD(rect, "check_box_outline");
-  LOAD(circle, "circle");
-  LOAD(line, "arrow_drawing");
-  LOAD(eraser, "ink_eraser");
-  LOAD(select, "arrow_selector");
-  LOAD(pan, "move_");
-  LOAD(grid, "grid");
-  LOAD(fullscreen, "fullscreen");
-  LOAD(colorPicker, "color_gradent_choose");
-  LOAD(darkMode, "dark_mode");
-  LOAD(lightMode, "light_mode");
-  LOAD(windowMinimize, "minmaz_app");
-  LOAD(windowToggleSize, "toggle_window_size");
-  LOAD(windowClose, "close_app");
-#undef LOAD
+  IconEntry entries[] = {
+      {"menu", &icons->menu},
+      {"add", &icons->add},
+      {"load_file", &icons->openFile},
+      {"save", &icons->saveFile},
+      {"chevron_left", &icons->undo},
+      {"arrow_forward", &icons->redo},
+
+      {"draw_pen", &icons->pen},
+      {"check_box_outline", &icons->rect},
+      {"circle", &icons->circle},
+      {"arrow_drawing", &icons->line},
+      {"ink_eraser", &icons->eraser},
+      {"arrow_selector", &icons->select},
+      {"move_", &icons->pan},
+
+      {"grid", &icons->grid},
+      {"fullscreen", &icons->fullscreen},
+      {"color_gradent_choose", &icons->colorPicker},
+
+      {"dark_mode", &icons->darkMode},
+      {"light_mode", &icons->lightMode},
+
+      {"minmaz_app", &icons->windowMinimize},
+      {"toggle_window_size", &icons->windowToggleSize},
+      {"close_app", &icons->windowClose},
+  };
+
+  int count = (int)(sizeof(entries) / sizeof(entries[0]));
+  for (int i = 0; i < count; i++)
+    SetIconSrc(entries[i].icon, i);
+
+  const char *atlasPath = "assets/ui_icons/atlas.png";
+  if (!AtlasIsStale(atlasPath, entries, count)) {
+    icons->atlas = LoadTexture(atlasPath);
+  }
+
+  if (icons->atlas.id == 0) {
+    icons->atlas = BuildAtlas(atlasPath, entries, count);
+  }
 }
 
 void GuiIconsUnload(GuiIcons *icons) {
-#define UNLOAD(field) UnloadIcon(&icons->field)
-  UNLOAD(menu);
-  UNLOAD(add);
-  UNLOAD(openFile);
-  UNLOAD(saveFile);
-  UNLOAD(undo);
-  UNLOAD(redo);
-  UNLOAD(pen);
-  UNLOAD(rect);
-  UNLOAD(circle);
-  UNLOAD(line);
-  UNLOAD(eraser);
-  UNLOAD(select);
-  UNLOAD(pan);
-  UNLOAD(grid);
-  UNLOAD(fullscreen);
-  UNLOAD(colorPicker);
-  UNLOAD(darkMode);
-  UNLOAD(lightMode);
-  UNLOAD(windowMinimize);
-  UNLOAD(windowToggleSize);
-  UNLOAD(windowClose);
-#undef UNLOAD
+  if (icons->atlas.id != 0)
+    UnloadTexture(icons->atlas);
   *icons = (GuiIcons){0};
 }
 
-void GuiDrawIconTexture(Texture2D tex, Rectangle bounds, Color tint) {
-  if (tex.id == 0)
+void GuiDrawIconTexture(const GuiIcons *icons, GuiIcon icon, Rectangle bounds,
+                        Color tint) {
+  if (icons->atlas.id == 0 || icon.src.width <= 0.0f || icon.src.height <= 0.0f)
     return;
-  float scale = fminf(bounds.width / (float)tex.width,
-                      bounds.height / (float)tex.height);
+  float scale =
+      fminf(bounds.width / icon.src.width, bounds.height / icon.src.height);
   scale = fminf(scale, 1.0f);
-  float w = (float)tex.width * scale;
-  float h = (float)tex.height * scale;
-  Rectangle src = {0, 0, (float)tex.width, (float)tex.height};
+  float w = icon.src.width * scale;
+  float h = icon.src.height * scale;
   Rectangle dst = {bounds.x + (bounds.width - w) / 2.0f,
                    bounds.y + (bounds.height - h) / 2.0f, w, h};
-  DrawTexturePro(tex, src, dst, (Vector2){0, 0}, 0.0f, tint);
+  DrawTexturePro(icons->atlas, icon.src, dst, (Vector2){0, 0}, 0.0f, tint);
 }
 
-bool GuiIconButton(Rectangle bounds, Texture2D icon, bool active, Color bgActive,
-                   Color bgHover, Color iconActive, Color iconIdle,
-                   Color iconHover) {
+bool GuiIconButton(const GuiIcons *icons, Rectangle bounds, GuiIcon icon,
+                   bool active, Color bgActive, Color bgHover, Color iconActive,
+                   Color iconIdle, Color iconHover) {
   Vector2 mouse = GetMousePosition();
   bool hover = CheckCollisionPointRec(mouse, bounds);
 
@@ -97,8 +159,8 @@ bool GuiIconButton(Rectangle bounds, Texture2D icon, bool active, Color bgActive
     DrawRectangleRounded(bounds, 0.25f, 6, bgHover);
 
   Color tint = active ? iconActive : (hover ? iconHover : iconIdle);
-  if (icon.id != 0)
-    GuiDrawIconTexture(icon, bounds, tint);
+  if (icons->atlas.id != 0)
+    GuiDrawIconTexture(icons, icon, bounds, tint);
   else
     DrawRectangleLinesEx(bounds, 1.0f, tint);
 

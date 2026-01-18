@@ -31,6 +31,7 @@ typedef struct {
   Stroke *strokes;
   int strokeCount;
   int capacity;
+  int totalPoints;
 
   // Redo Stack
   Stroke *redoStrokes;

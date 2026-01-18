@@ -3,13 +3,13 @@
 
 void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
   canvas->strokeCount = 0;
-  canvas->capacity = 1000;
-  canvas->strokes = (Stroke *)malloc(sizeof(Stroke) * (size_t)canvas->capacity);
+  canvas->capacity = 0;
+  canvas->strokes = NULL;
+  canvas->totalPoints = 0;
 
   canvas->redoCount = 0;
-  canvas->redoCapacity = 1000;
-  canvas->redoStrokes =
-      (Stroke *)malloc(sizeof(Stroke) * (size_t)canvas->redoCapacity);
+  canvas->redoCapacity = 0;
+  canvas->redoStrokes = NULL;
 
   canvas->camera.target = (Vector2){0.0f, 0.0f};
   canvas->camera.offset = (Vector2){screenWidth / 2.0f, screenHeight / 2.0f};
@@ -20,6 +20,7 @@ void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
   canvas->showGrid = true;
   canvas->currentStroke.points = NULL;
   canvas->currentStroke.pointCount = 0;
+  canvas->currentStroke.capacity = 0;
 
   canvas->backgroundColor = (Color){20, 20, 20, 255};
   canvas->gridColor = (Color){50, 50, 50, 255};
@@ -42,4 +43,3 @@ void FreeCanvas(Canvas *canvas) {
   free(canvas->currentStroke.points);
   canvas->currentStroke.points = NULL;
 }
-

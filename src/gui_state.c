@@ -13,7 +13,7 @@ void InitGui(GuiState *gui) {
   memset(gui, 0, sizeof(*gui));
 
   gui->activeTool = TOOL_PEN;
-  gui->currentColor = BLACK;
+  gui->currentColor = WHITE;
   gui->currentThickness = 3.0f;
   gui->toolbarRect = (Rectangle){0, 0, (float)GetScreenWidth(), 88};
 
@@ -29,7 +29,7 @@ void InitGui(GuiState *gui) {
   gui->satValue = hsv.y;
   gui->valValue = hsv.z;
 
-  gui->darkMode = false;
+  gui->darkMode = true;
   gui->showMenu = false;
   gui->menuRect = (Rectangle){0, 0, 200, 220};
   gui->requestExit = false;
@@ -52,4 +52,3 @@ bool IsMouseOverGui(GuiState *gui) {
   bool overMenu = gui->showMenu && CheckCollisionPointRec(mouse, gui->menuRect);
   return overTop || overPalette || overPicker || overMenu;
 }
-

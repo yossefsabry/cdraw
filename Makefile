@@ -1,5 +1,12 @@
-CC = gcc
-CFLAGS = -g -O0 -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+CC ?= gcc
+
+DEBUG ?= 0
+CFLAGS ?= -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+ifeq ($(DEBUG),1)
+  CFLAGS += -g -O0
+else
+  CFLAGS += -O2 -DNDEBUG
+endif
 LDFLAGS = -lraylib -lm -lpthread -ldl -lrt -lX11
 
 SRC_DIR = src

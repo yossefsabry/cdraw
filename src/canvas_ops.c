@@ -11,22 +11,25 @@ static void ClearRedo(Canvas *canvas) {
 void AddStroke(Canvas *canvas, Stroke stroke) {
   ClearRedo(canvas);
   if (canvas->strokeCount >= canvas->capacity) {
-    canvas->capacity *= 2;
-    canvas->strokes = (Stroke *)realloc(canvas->strokes,
-                                        sizeof(Stroke) * (size_t)canvas->capacity);
+    int newCap = (canvas->capacity == 0) ? 64 : canvas->capacity * 2;
+    canvas->strokes =
+        (Stroke *)realloc(canvas->strokes, sizeof(Stroke) * (size_t)newCap);
+    canvas->capacity = newCap;
   }
   canvas->strokes[canvas->strokeCount++] = stroke;
+  canvas->totalPoints += stroke.pointCount;
 }
 
 void Undo(Canvas *canvas) {
   if (canvas->strokeCount <= 0)
     return;
   Stroke s = canvas->strokes[--canvas->strokeCount];
+  canvas->totalPoints -= s.pointCount;
   if (canvas->redoCount >= canvas->redoCapacity) {
-    canvas->redoCapacity *= 2;
+    int newCap = (canvas->redoCapacity == 0) ? 64 : canvas->redoCapacity * 2;
     canvas->redoStrokes =
-        (Stroke *)realloc(canvas->redoStrokes,
-                          sizeof(Stroke) * (size_t)canvas->redoCapacity);
+        (Stroke *)realloc(canvas->redoStrokes, sizeof(Stroke) * (size_t)newCap);
+    canvas->redoCapacity = newCap;
   }
   canvas->redoStrokes[canvas->redoCount++] = s;
   if (canvas->selectedStrokeIndex >= canvas->strokeCount)
@@ -39,11 +42,13 @@ void Redo(Canvas *canvas) {
     return;
   Stroke s = canvas->redoStrokes[--canvas->redoCount];
   if (canvas->strokeCount >= canvas->capacity) {
-    canvas->capacity *= 2;
-    canvas->strokes = (Stroke *)realloc(canvas->strokes,
-                                        sizeof(Stroke) * (size_t)canvas->capacity);
+    int newCap = (canvas->capacity == 0) ? 64 : canvas->capacity * 2;
+    canvas->strokes =
+        (Stroke *)realloc(canvas->strokes, sizeof(Stroke) * (size_t)newCap);
+    canvas->capacity = newCap;
   }
   canvas->strokes[canvas->strokeCount++] = s;
+  canvas->totalPoints += s.pointCount;
   fprintf(stderr, "Action Redone. Strokes: %d\n", canvas->strokeCount);
 }
 
@@ -51,6 +56,7 @@ void ClearCanvas(Canvas *canvas) {
   for (int i = 0; i < canvas->strokeCount; i++)
     free(canvas->strokes[i].points);
   canvas->strokeCount = 0;
+  canvas->totalPoints = 0;
   ClearRedo(canvas);
 
   canvas->selectedStrokeIndex = -1;
@@ -66,11 +72,8 @@ void ClearCanvas(Canvas *canvas) {
 }
 
 int GetTotalPoints(const Canvas *canvas) {
-  int total = 0;
-  for (int i = 0; i < canvas->strokeCount; i++)
-    total += canvas->strokes[i].pointCount;
+  int total = canvas->totalPoints;
   if (canvas->isDrawing)
     total += canvas->currentStroke.pointCount;
   return total;
 }
-

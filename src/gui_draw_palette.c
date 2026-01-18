@@ -41,11 +41,10 @@ void GuiDrawPalette(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
   gui->paletteButtonRect = (Rectangle){paletteX + paletteW - 42, paletteY + 8,
                                        32, 32};
-  if (GuiIconButton(gui->paletteButtonRect, gui->icons.colorPicker, false, t.hover,
-                    t.hover, t.text, iconIdle, iconHover)) {
+  if (GuiIconButton(&gui->icons, gui->paletteButtonRect, gui->icons.colorPicker,
+                    false, t.hover, t.hover, t.text, iconIdle, iconHover)) {
     gui->showColorPicker = !gui->showColorPicker;
     gui->colorPickerRect.x = (float)sw / 2 - gui->colorPickerRect.width / 2;
     gui->colorPickerRect.y = paletteY - gui->colorPickerRect.height - 10;
   }
 }
-
