@@ -1,14 +1,16 @@
 
 
 __ NICE WORK
--- FIX THE PROBLEMS ON THE RULES (IT"S  LITTLE BUGS)
+-- FIX THE PROBLEMS ON THE RULES (IT"S  LITTLE BUGS) (DONE)
+-- adding rest view button
+-- help menu
+-- help system
 
 - enhance better function for drawing
 - adding localstaroge for save the user prefrances
 - handle how to save teh canves and how to load the caves
 - intgrated gemini api key and smart system
 - welcome page for first time application
-- shourtcuts for the application tools
-- help system
-- lincence and more things
+- shourtcuts for the application tools (DONE)
+- lincence and more things (DONE)
 
