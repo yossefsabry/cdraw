@@ -24,16 +24,20 @@ int main(void) {
 
     UpdateGui(&gui, &canvas);
     UpdateCanvasState(&canvas, mouseOverGui, gui.activeTool);
+    UpdateCursor(&gui, &canvas, mouseOverGui);
 
     // Draw
     BeginDrawing();
     DrawCanvas(&canvas);
     DrawGui(&gui, &canvas);
+    DrawCursorOverlay(&gui, &canvas, mouseOverGui);
     EndDrawing();
   }
 
   UnloadGui(&gui);
   FreeCanvas(&canvas);
+  ShowCursor();
+  SetMouseCursor(MOUSE_CURSOR_DEFAULT);
   CloseWindow();
 
   return 0;

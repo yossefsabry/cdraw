@@ -83,5 +83,6 @@ void DrawGui(GuiState *gui, Canvas *canvas);
 void UpdateGui(GuiState *gui, Canvas *canvas);
 bool IsMouseOverGui(GuiState *gui);
 void UpdateCursor(GuiState *gui, const Canvas *canvas, bool mouseOverGui);
+void DrawCursorOverlay(GuiState *gui, const Canvas *canvas, bool mouseOverGui);
 
 #endif // GUI_H

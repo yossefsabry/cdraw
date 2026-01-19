@@ -1,6 +1,101 @@
 #include "gui_internal.h"
 #include "raymath.h"
 
+static bool IsPanningNow(int activeTool, bool inputCaptured) {
+  bool isPanning = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
+  if (!inputCaptured && IsKeyDown(KEY_SPACE) &&
+      IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+    isPanning = true;
+  if (activeTool == TOOL_PAN && IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+      !inputCaptured)
+    isPanning = true;
+  return isPanning;
+}
+
+void UpdateCursor(GuiState *gui, const Canvas *canvas, bool mouseOverGui) {
+  int cursor = MOUSE_CURSOR_DEFAULT;
+
+  bool isPanning = IsPanningNow(gui->activeTool, mouseOverGui);
+  bool useCustomEraserCursor = !mouseOverGui && !gui->isTyping &&
+                               gui->activeTool == TOOL_ERASER && !isPanning;
+
+  static bool cursorHidden = false;
+  if (useCustomEraserCursor) {
+    if (!cursorHidden) {
+      HideCursor();
+      cursorHidden = true;
+    }
+  } else {
+    if (cursorHidden) {
+      ShowCursor();
+      cursorHidden = false;
+    }
+  }
+
+  if (mouseOverGui) {
+    cursor = MOUSE_CURSOR_DEFAULT;
+  } else if (gui->isTyping) {
+    cursor = MOUSE_CURSOR_IBEAM;
+  } else {
+    if (isPanning) {
+      cursor = MOUSE_CURSOR_RESIZE_ALL;
+    } else {
+      switch (gui->activeTool) {
+      case TOOL_PEN:
+      case TOOL_LINE:
+      case TOOL_RECT:
+      case TOOL_CIRCLE:
+        cursor = MOUSE_CURSOR_CROSSHAIR;
+        break;
+      case TOOL_ERASER:
+        cursor = useCustomEraserCursor ? MOUSE_CURSOR_DEFAULT
+                                       : MOUSE_CURSOR_CROSSHAIR;
+        break;
+      case TOOL_SELECT:
+        cursor = canvas->isDraggingSelection ? MOUSE_CURSOR_RESIZE_ALL
+                                             : MOUSE_CURSOR_POINTING_HAND;
+        break;
+      case TOOL_PAN:
+        cursor = MOUSE_CURSOR_RESIZE_ALL;
+        break;
+      default:
+        cursor = MOUSE_CURSOR_DEFAULT;
+        break;
+      }
+    }
+  }
+
+  static int lastCursor = -1;
+  if (cursor != lastCursor) {
+    SetMouseCursor(cursor);
+    lastCursor = cursor;
+  }
+}
+
+void DrawCursorOverlay(GuiState *gui, const Canvas *canvas, bool mouseOverGui) {
+  (void)canvas;
+
+  bool isPanning = IsPanningNow(gui->activeTool, mouseOverGui);
+  bool useCustomEraserCursor = !mouseOverGui && !gui->isTyping &&
+                               gui->activeTool == TOOL_ERASER && !isPanning;
+  if (!useCustomEraserCursor)
+    return;
+
+  Theme t = GuiThemeGet(gui->darkMode);
+  Vector2 m = GetMousePosition();
+
+  // Eraser uses a world radius computed as (8 + thickness)/zoom, so on-screen the
+  // radius is effectively constant in pixels.
+  float radius = 8.0f + gui->currentThickness;
+
+  Color halo = ColorAlpha(gui->darkMode ? BLACK : WHITE, 0.35f);
+  DrawCircleLines((int)m.x, (int)m.y, radius + 1.0f, halo);
+  DrawCircleLines((int)m.x, (int)m.y, radius, t.primary);
+
+  Rectangle iconBounds = {m.x - 12, m.y - 12, 24, 24};
+  GuiDrawIconTexture(&gui->icons, gui->icons.eraser, iconBounds, t.text);
+}
+
 void UpdateGui(GuiState *gui, Canvas *canvas) {
   Theme t = GuiThemeGet(gui->darkMode);
 
