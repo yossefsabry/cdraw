@@ -1,5 +1,6 @@
 #include "gui_internal.h"
 #include "raymath.h"
+#include "view_reset.h"
 #include <stdio.h>
 
 static void Divider(float x, float y, float h, Color c) {
@@ -130,13 +131,20 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     DrawTextEx(gui->uiFont, TextFormat("%.0f", gui->currentThickness),
                (Vector2){tx + 100, btnY + 12}, 12, 1.0f, t.textDim);
 
-    float rtx = (float)sw - 90;
-    Rectangle gridBtn = {rtx, btnY, btnS, btnS};
+    float rtx = (float)sw - 130;
+    Rectangle resetBtn = {rtx, btnY, btnS, btnS};
+    if (GuiIconButton(&gui->icons, resetBtn, gui->icons.resetView, false, t.hover,
+                      t.hover, t.text, iconIdle, iconHover)) {
+        ResetCanvasView(canvas);
+        GuiToastSet(gui, "View reset.");
+    }
+
+    Rectangle gridBtn = {rtx + 40, btnY, btnS, btnS};
     if (GuiIconButton(&gui->icons, gridBtn, gui->icons.grid, canvas->showGrid,
                       t.hover, t.hover, t.primary, iconIdle, iconHover))
         canvas->showGrid = !canvas->showGrid;
 
-    Rectangle fsBtn = {rtx + 40, btnY, btnS, btnS};
+    Rectangle fsBtn = {rtx + 80, btnY, btnS, btnS};
     if (GuiIconButton(&gui->icons, fsBtn, gui->icons.fullscreen, false, t.hover,
                       t.hover, t.text, iconIdle, iconHover))
         ToggleFullscreen();

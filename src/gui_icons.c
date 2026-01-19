@@ -111,6 +111,8 @@ void GuiIconsLoad(GuiIcons *icons) {
       {"minmaz_app", &icons->windowMinimize},
       {"toggle_window_size", &icons->windowToggleSize},
       {"close_app", &icons->windowClose},
+
+      {"reset_view", &icons->resetView},
   };
 
   int count = (int)(sizeof(entries) / sizeof(entries[0]));

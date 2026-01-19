@@ -30,6 +30,7 @@ typedef struct {
 
   GuiIcon grid;
   GuiIcon fullscreen;
+  GuiIcon resetView;
 
   GuiIcon colorPicker;
 
