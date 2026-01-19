@@ -55,6 +55,10 @@ typedef struct {
   Rectangle rulerTopRect;
   Rectangle rulerLeftRect;
 
+  // Welcome
+  bool showWelcome;
+  bool hasSeenWelcome;
+
   // Palette State
   Rectangle paletteRect;
   Rectangle paletteButtonRect;

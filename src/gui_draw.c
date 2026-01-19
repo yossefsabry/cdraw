@@ -6,6 +6,11 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
 
+  if (gui->showWelcome) {
+    GuiDrawWelcome(gui, canvas, t, sw, sh);
+    return;
+  }
+
   const float footerH = 24.0f;
   const float paletteW = 280.0f;
   const float paletteH = 48.0f;

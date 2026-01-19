@@ -1,5 +1,6 @@
 #include "canvas.h"
 #include "gui.h"
+#include "prefs.h"
 #include "raylib.h"
 
 int main(void) {
@@ -15,6 +16,15 @@ int main(void) {
 
   GuiState gui;
   InitGui(&gui);
+
+  AppPrefs prefs = PrefsDefaults();
+  (void)PrefsLoad(&prefs);
+  gui.darkMode = prefs.darkMode;
+  canvas.showGrid = prefs.showGrid;
+  gui.hasSeenWelcome = prefs.hasSeenWelcome;
+  gui.showWelcome = !prefs.hasSeenWelcome;
+  if (gui.showWelcome)
+    gui.hasSeenWelcome = true;
 
   SetTargetFPS(60);
 
@@ -33,6 +43,12 @@ int main(void) {
     DrawCursorOverlay(&gui, &canvas, mouseOverGui);
     EndDrawing();
   }
+
+  AppPrefs finalPrefs = PrefsDefaults();
+  finalPrefs.darkMode = gui.darkMode;
+  finalPrefs.showGrid = canvas.showGrid;
+  finalPrefs.hasSeenWelcome = gui.hasSeenWelcome;
+  (void)PrefsSave(&finalPrefs);
 
   UnloadGui(&gui);
   FreeCanvas(&canvas);

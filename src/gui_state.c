@@ -18,6 +18,8 @@ void InitGui(GuiState *gui) {
   gui->toolbarRect = (Rectangle){0, 0, (float)GetScreenWidth(), 88};
 
   gui->showRulers = true;
+  gui->showWelcome = false;
+  gui->hasSeenWelcome = false;
 
   gui->paletteRect = (Rectangle){0, 0, 0, 0};
   gui->paletteButtonRect = (Rectangle){0, 0, 0, 0};
@@ -44,6 +46,9 @@ void InitGui(GuiState *gui) {
 }
 
 bool IsMouseOverGui(GuiState *gui) {
+  if (gui->showWelcome)
+    return true;
+
   const float topH = 88.0f;
   const float footerH = 24.0f;
   const float rulerSize = 24.0f;
