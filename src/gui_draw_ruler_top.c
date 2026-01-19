@@ -153,8 +153,7 @@ void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw,
   float triW = 10.0f;
   float triH = 6.0f;
   DrawTriangle((Vector2){mx, yb},
-               (Vector2){mx - triW * 0.5f, yb - triH},
-               (Vector2){mx + triW * 0.5f, yb - triH}, t.primary);
+               (Vector2){mx + triW * 0.5f, yb - triH},
+               (Vector2){mx - triW * 0.5f, yb - triH}, t.primary);
   DrawLineEx((Vector2){mx, r.y}, (Vector2){mx, yb}, 1, ColorAlpha(t.primary, 0.25f));
 }
-
