@@ -10,6 +10,7 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
 
   bool ctrl = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
   bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+  bool alt = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
 
   float wheel = GetMouseWheelMove();
   if (ctrl && shift && wheel != 0.0f) {
@@ -34,6 +35,27 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
     GuiToastSet(gui, "New canvas.");
   }
 
+  if (!gui->isTyping && !ctrl && !alt) {
+    typedef struct {
+      KeyboardKey key;
+      int tool;
+    } ToolShortcut;
+
+    static const ToolShortcut toolShortcuts[] = {
+        {KEY_P, TOOL_PEN},      {KEY_B, TOOL_RECT},   {KEY_C, TOOL_CIRCLE},
+        {KEY_A, TOOL_LINE},     {KEY_E, TOOL_ERASER}, {KEY_M, TOOL_SELECT},
+    };
+
+    const int count =
+        (int)(sizeof(toolShortcuts) / sizeof(toolShortcuts[0]));
+    for (int i = 0; i < count; i++) {
+      if (IsKeyPressed(toolShortcuts[i].key)) {
+        gui->activeTool = toolShortcuts[i].tool;
+        break;
+      }
+    }
+  }
+
   if (IsKeyPressed(KEY_G))
     canvas->showGrid = !canvas->showGrid;
   if (IsKeyPressed(KEY_F))
@@ -43,4 +65,3 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
     gui->showColorPicker = false;
   }
 }
-

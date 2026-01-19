@@ -68,6 +68,7 @@ typedef struct {
   Rectangle menuRect;
   Rectangle menuButtonRect;
   bool requestExit;
+  bool isTyping;
 
   char currentFile[256];
   char toast[128];
@@ -81,5 +82,6 @@ void UnloadGui(GuiState *gui);
 void DrawGui(GuiState *gui, Canvas *canvas);
 void UpdateGui(GuiState *gui, Canvas *canvas);
 bool IsMouseOverGui(GuiState *gui);
+void UpdateCursor(GuiState *gui, const Canvas *canvas, bool mouseOverGui);
 
 #endif // GUI_H

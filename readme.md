@@ -51,6 +51,7 @@ make clean
 - `Ctrl+S` save to `drawing.cdraw`
 - `Ctrl+O` load from `drawing.cdraw`
 - `Ctrl+N` new canvas
+- Tool shortcuts: `P` pen, `B` rectangle, `C` circle, `A` arrow/line, `E` eraser, `M` move/select
 - `G` toggle grid
 - `F` toggle fullscreen
 - `Esc` close menus/pickers
