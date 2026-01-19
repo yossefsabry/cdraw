@@ -131,14 +131,15 @@ void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw,
       FormatLabel(label, sizeof(label), v, majorStep);
 
       int fontSize = 10;
-      int tw = MeasureText(label, fontSize);
-      float tx = sx - (float)tw / 2.0f;
+      float tw = MeasureTextEx(gui->uiFont, label, (float)fontSize, 1.0f).x;
+      float tx = sx - tw / 2.0f;
       float pad = 2.0f;
       if (tx < r.x + pad)
         tx = r.x + pad;
-      if (tx + (float)tw > r.x + r.width - pad)
+      if (tx + tw > r.x + r.width - pad)
         continue;
-      DrawText(label, (int)tx, (int)(r.y + 3.0f), fontSize, t.textDim);
+      DrawTextEx(gui->uiFont, label, (Vector2){tx, r.y + 3.0f}, (float)fontSize,
+                 1.0f, t.textDim);
     }
   }
 

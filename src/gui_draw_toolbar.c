@@ -99,7 +99,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     char hex[10];
     snprintf(hex, sizeof(hex), "#%02X%02X%02X", gui->currentColor.r,
              gui->currentColor.g, gui->currentColor.b);
-    DrawText(hex, (int)tx + 32, (int)btnY + 12, 12, t.textDim);
+    DrawTextEx(gui->uiFont, hex, (Vector2){tx + 32, btnY + 12}, 12, 1.0f,
+               t.textDim);
 
     gui->colorButtonRect = (Rectangle){tx, btnY, 96, btnS};
     if (CheckCollisionPointRec(GetMousePosition(), gui->colorButtonRect) &&
@@ -126,8 +127,8 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
         float r = (mouse.x - ((float)tx + 10)) / 80.0f;
         gui->currentThickness = 1.0f + Clamp(r, 0, 1) * 20.0f;
     }
-    DrawText(TextFormat("%.0f", gui->currentThickness), (int)tx + 100,
-             (int)btnY + 12, 12, t.textDim);
+    DrawTextEx(gui->uiFont, TextFormat("%.0f", gui->currentThickness),
+               (Vector2){tx + 100, btnY + 12}, 12, 1.0f, t.textDim);
 
     float rtx = (float)sw - 90;
     Rectangle gridBtn = {rtx, btnY, btnS, btnS};

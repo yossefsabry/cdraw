@@ -7,22 +7,24 @@ void GuiDrawFooter(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh) {
 
   Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), canvas->camera);
   int totalPoints = GetTotalPoints(canvas);
-  DrawText(TextFormat("Pos: %.0f, %.0f", mouseWorld.x, mouseWorld.y), 10,
-           sh - 18, 10, t.textDim);
-  DrawText(TextFormat("Zoom: %.2f", canvas->camera.zoom), 130, sh - 18, 10,
-           t.textDim);
-  DrawText(TextFormat("FPS: %d", GetFPS()), 240, sh - 18, 10, t.textDim);
-  DrawText(TextFormat("Strokes: %d", canvas->strokeCount), sw - 200, sh - 18, 10,
-           t.textDim);
-  DrawText(TextFormat("Points: %d", totalPoints), sw - 100, sh - 18, 10,
-           t.textDim);
+  DrawTextEx(gui->uiFont,
+             TextFormat("Pos: %.0f, %.0f", mouseWorld.x, mouseWorld.y),
+             (Vector2){10, (float)sh - 18}, 10, 1.0f, t.textDim);
+  DrawTextEx(gui->uiFont, TextFormat("Zoom: %.2f", canvas->camera.zoom),
+             (Vector2){130, (float)sh - 18}, 10, 1.0f, t.textDim);
+  DrawTextEx(gui->uiFont, TextFormat("FPS: %d", GetFPS()),
+             (Vector2){240, (float)sh - 18}, 10, 1.0f, t.textDim);
+  DrawTextEx(gui->uiFont, TextFormat("Strokes: %d", canvas->strokeCount),
+             (Vector2){(float)sw - 200, (float)sh - 18}, 10, 1.0f, t.textDim);
+  DrawTextEx(gui->uiFont, TextFormat("Points: %d", totalPoints),
+             (Vector2){(float)sw - 100, (float)sh - 18}, 10, 1.0f, t.textDim);
 
   if (gui->toastUntil > GetTime() && gui->toast[0] != '\0') {
-    int tw = MeasureText(gui->toast, 12);
-    Rectangle toast = {(float)sw - (float)tw - 30, 92, (float)tw + 20, 26};
+    float tw = MeasureTextEx(gui->uiFont, gui->toast, 12, 1.0f).x;
+    Rectangle toast = {(float)sw - tw - 30, 92, tw + 20, 26};
     DrawRectangleRounded(toast, 0.25f, 6, ColorAlpha(t.surface, 0.95f));
     DrawRectangleRoundedLinesEx(toast, 0.25f, 6, 1.0f, t.border);
-    DrawText(gui->toast, (int)toast.x + 10, (int)toast.y + 7, 12, t.text);
+    DrawTextEx(gui->uiFont, gui->toast, (Vector2){toast.x + 10, toast.y + 7}, 12,
+               1.0f, t.text);
   }
 }
-

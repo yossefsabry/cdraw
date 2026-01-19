@@ -105,7 +105,7 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
   int endIndex = (int)ceilf(bottomWorldY / minorStep) + 1;
 
   float xr = r.x + r.width;
-  Font font = GetFontDefault();
+  Font font = gui->uiFont;
   float fontSize = 10.0f;
 
   for (int idx = startIndex; idx <= endIndex; idx++) {
@@ -150,4 +150,3 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
                (Vector2){xr - triH, my + triW * 0.5f}, t.primary);
   DrawLineEx((Vector2){r.x, my}, (Vector2){xr, my}, 1, ColorAlpha(t.primary, 0.25f));
 }
-

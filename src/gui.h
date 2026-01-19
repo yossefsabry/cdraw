@@ -84,6 +84,8 @@ typedef struct {
   double toastUntil;
 
   GuiIcons icons;
+  Font uiFont;
+  bool ownsUiFont;
 } GuiState;
 
 void InitGui(GuiState *gui);

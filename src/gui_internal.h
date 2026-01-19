@@ -21,6 +21,9 @@ Theme GuiThemeGet(bool darkMode);
 
 void GuiToastSet(GuiState *gui, const char *msg);
 
+void GuiFontLoad(GuiState *gui);
+void GuiFontUnload(GuiState *gui);
+
 void GuiIconsLoad(GuiIcons *icons);
 void GuiIconsUnload(GuiIcons *icons);
 

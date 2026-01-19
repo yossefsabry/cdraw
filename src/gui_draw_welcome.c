@@ -1,6 +1,7 @@
 #include "gui_internal.h"
 
-static bool TextButton(Rectangle r, const char *label, Theme t, bool primary) {
+static bool TextButton(Font font, Rectangle r, const char *label, Theme t,
+                       bool primary) {
   Vector2 mouse = GetMousePosition();
   bool hover = CheckCollisionPointRec(mouse, r);
 
@@ -12,17 +13,19 @@ static bool TextButton(Rectangle r, const char *label, Theme t, bool primary) {
   DrawRectangleRoundedLinesEx(r, 0.25f, 8, 1.0f, t.border);
 
   int fontSize = 12;
-  int tw = MeasureText(label, fontSize);
+  float tw = MeasureTextEx(font, label, (float)fontSize, 1.0f).x;
   Color textColor = primary ? BLACK : t.text;
-  DrawText(label, (int)(r.x + (r.width - (float)tw) / 2.0f),
-           (int)(r.y + (r.height - (float)fontSize) / 2.0f), fontSize, textColor);
+  DrawTextEx(font, label,
+             (Vector2){r.x + (r.width - tw) / 2.0f,
+                       r.y + (r.height - (float)fontSize) / 2.0f},
+             (float)fontSize, 1.0f, textColor);
 
   return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }
 
-static float DrawLineText(float x, float y, const char *text, int fontSize,
-                          Color c) {
-  DrawText(text, (int)x, (int)y, fontSize, c);
+static float DrawLineText(Font font, float x, float y, const char *text,
+                          int fontSize, Color c) {
+  DrawTextEx(font, text, (Vector2){x, y}, (float)fontSize, 1.0f, c);
   return y + (float)fontSize + 6.0f;
 }
 
@@ -52,35 +55,37 @@ void GuiDrawWelcome(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh) {
   float x = card.x + pad;
   float y = card.y + pad;
 
-  y = DrawLineText(x, y, "Welcome to cdraw", 20, t.text);
-  y = DrawLineText(x, y, "A lightweight vector sketchpad with an infinite canvas.",
-                   12, t.textDim);
-  y += 6.0f;
-
-  y = DrawLineText(x, y, "Quick shortcuts:", 12, t.text);
-  y = DrawLineText(x, y, "  P Pen   B Rectangle   C Circle   A Arrow/Line", 12,
-                   t.textDim);
-  y = DrawLineText(x, y, "  E Eraser   M Move/Select", 12, t.textDim);
-  y += 6.0f;
-
-  y = DrawLineText(x, y, "Navigation:", 12, t.text);
-  y = DrawLineText(x, y, "  Wheel = zoom   Right-drag / Space+drag = pan", 12,
+  y = DrawLineText(gui->uiFont, x, y, "Welcome to cdraw", 20, t.text);
+  y = DrawLineText(gui->uiFont, x, y,
+                   "A lightweight vector sketchpad with an infinite canvas.", 12,
                    t.textDim);
   y += 6.0f;
 
-  y = DrawLineText(x, y, "File:", 12, t.text);
-  y = DrawLineText(x, y, "  Ctrl+S = save   Ctrl+O = open   Ctrl+N = new", 12,
-                   t.textDim);
+  y = DrawLineText(gui->uiFont, x, y, "Quick shortcuts:", 12, t.text);
+  y = DrawLineText(gui->uiFont, x, y,
+                   "  P Pen   B Rectangle   C Circle   A Arrow/Line", 12, t.textDim);
+  y = DrawLineText(gui->uiFont, x, y, "  E Eraser   M Move/Select", 12, t.textDim);
   y += 6.0f;
 
-  y = DrawLineText(x, y, "Tip: Press G to toggle the grid, and F for fullscreen.",
-                   12, t.textDim);
+  y = DrawLineText(gui->uiFont, x, y, "Navigation:", 12, t.text);
+  y = DrawLineText(gui->uiFont, x, y,
+                   "  Wheel = zoom   Right-drag / Space+drag = pan", 12, t.textDim);
+  y += 6.0f;
+
+  y = DrawLineText(gui->uiFont, x, y, "File:", 12, t.text);
+  y = DrawLineText(gui->uiFont, x, y,
+                   "  Ctrl+S = save   Ctrl+O = open   Ctrl+N = new", 12, t.textDim);
+  y += 6.0f;
+
+  y = DrawLineText(gui->uiFont, x, y,
+                   "Tip: Press G to toggle the grid, and F for fullscreen.", 12,
+                   t.textDim);
 
   float btnH = 34.0f;
   Rectangle primaryBtn = {card.x + card.width - pad - 130.0f,
                           card.y + card.height - pad - btnH, 130.0f, btnH};
 
-  if (TextButton(primaryBtn, "Let's draw", t, true) ||
+  if (TextButton(gui->uiFont, primaryBtn, "Let's draw", t, true) ||
       IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
     gui->showWelcome = false;
     gui->hasSeenWelcome = true;

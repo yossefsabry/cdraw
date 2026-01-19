@@ -7,7 +7,10 @@ void GuiToastSet(GuiState *gui, const char *msg) {
   gui->toastUntil = GetTime() + 2.5;
 }
 
-void UnloadGui(GuiState *gui) { GuiIconsUnload(&gui->icons); }
+void UnloadGui(GuiState *gui) {
+  GuiFontUnload(gui);
+  GuiIconsUnload(&gui->icons);
+}
 
 void InitGui(GuiState *gui) {
   memset(gui, 0, sizeof(*gui));
@@ -43,6 +46,7 @@ void InitGui(GuiState *gui) {
   gui->toastUntil = 0.0;
 
   GuiIconsLoad(&gui->icons);
+  GuiFontLoad(gui);
 }
 
 bool IsMouseOverGui(GuiState *gui) {

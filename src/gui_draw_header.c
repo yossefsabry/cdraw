@@ -15,7 +15,8 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   DrawRectangleRoundedLinesEx(tab, 0.20f, 6, 1.0f, t.border);
   GuiDrawIconTexture(&gui->icons, gui->icons.pen,
                      (Rectangle){tab.x + 8, tab.y + 6, 18, 18}, t.primary);
-  DrawText("Untitled Sketch", (int)tab.x + 30, (int)tab.y + 9, 12, t.text);
+  DrawTextEx(gui->uiFont, "Untitled Sketch", (Vector2){tab.x + 30, tab.y + 9},
+             12, 1.0f, t.text);
 
   Rectangle tabClose = {tab.x + tab.width - 24, tab.y + 6, 18, 18};
   if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
@@ -32,8 +33,9 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   }
 
   const char *vText = "cdraw";
-  int tw = MeasureText(vText, 12);
-  DrawText(vText, sw / 2 - tw / 2, 14, 12, t.textDim);
+  Vector2 vSize = MeasureTextEx(gui->uiFont, vText, 12, 1.0f);
+  DrawTextEx(gui->uiFont, vText, (Vector2){(float)sw / 2.0f - vSize.x / 2.0f, 14},
+             12, 1.0f, t.textDim);
 
   float rx = (float)sw - 120;
   Rectangle darkBtn = {rx, 7, 26, 26};
