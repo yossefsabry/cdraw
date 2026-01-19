@@ -17,6 +17,8 @@ void InitGui(GuiState *gui) {
   gui->currentThickness = 3.0f;
   gui->toolbarRect = (Rectangle){0, 0, (float)GetScreenWidth(), 88};
 
+  gui->showRulers = true;
+
   gui->paletteRect = (Rectangle){0, 0, 0, 0};
   gui->paletteButtonRect = (Rectangle){0, 0, 0, 0};
   gui->colorButtonRect = (Rectangle){0, 0, 0, 0};
@@ -43,9 +45,37 @@ void InitGui(GuiState *gui) {
 
 bool IsMouseOverGui(GuiState *gui) {
   const float topH = 88.0f;
+  const float footerH = 24.0f;
+  const float rulerSize = 24.0f;
+
   Vector2 mouse = GetMousePosition();
   bool overTop = CheckCollisionPointRec(
       mouse, (Rectangle){0, 0, (float)GetScreenWidth(), topH});
+
+  if (gui->showRulers) {
+    float sw = (float)GetScreenWidth();
+    float sh = (float)GetScreenHeight();
+
+    float topW = sw - rulerSize;
+    if (topW < 0.0f)
+      topW = 0.0f;
+    gui->rulerTopRect =
+        (Rectangle){rulerSize, topH, topW, rulerSize};
+
+    float leftH = sh - footerH - (topH + rulerSize);
+    if (leftH < 0.0f)
+      leftH = 0.0f;
+    gui->rulerLeftRect =
+        (Rectangle){0, topH + rulerSize, rulerSize, leftH};
+
+    Rectangle corner = (Rectangle){0, topH, rulerSize, rulerSize};
+    bool overRulers = CheckCollisionPointRec(mouse, gui->rulerTopRect) ||
+                      CheckCollisionPointRec(mouse, gui->rulerLeftRect) ||
+                      CheckCollisionPointRec(mouse, corner);
+    if (overRulers)
+      return true;
+  }
+
   bool overPalette = CheckCollisionPointRec(mouse, gui->paletteRect);
   bool overPicker =
       gui->showColorPicker && CheckCollisionPointRec(mouse, gui->colorPickerRect);

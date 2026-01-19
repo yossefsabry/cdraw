@@ -20,10 +20,11 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
 
   GuiDrawHeader(gui, canvas, t, iconIdle, iconHover, sw);
   GuiDrawToolbar(gui, canvas, t, iconIdle, iconHover, sw, sh, paletteY);
+  GuiDrawRulerTop(gui, canvas, t, sw, sh);
+  GuiDrawRulerLeft(gui, canvas, t, sw, sh);
   GuiDrawMenu(gui, canvas, t);
   GuiDrawPalette(gui, canvas, t, iconIdle, iconHover, sw, sh, paletteX, paletteY,
                  paletteW, paletteH);
   GuiDrawColorPicker(gui, t);
   GuiDrawFooter(gui, canvas, t, sw, sh);
 }
-

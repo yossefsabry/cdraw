@@ -34,6 +34,9 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                    Color iconHover, int sw);
 void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                     Color iconHover, int sw, int sh, float paletteY);
+void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw, int sh);
+void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
+                      int sh);
 void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t);
 void GuiDrawPalette(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                     Color iconHover, int sw, int sh, float paletteX,

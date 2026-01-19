@@ -50,6 +50,11 @@ typedef struct {
   // Slider State
   bool isDraggingSize;
 
+  // Rulers
+  bool showRulers;
+  Rectangle rulerTopRect;
+  Rectangle rulerLeftRect;
+
   // Palette State
   Rectangle paletteRect;
   Rectangle paletteButtonRect;
