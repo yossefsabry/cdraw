@@ -21,6 +21,7 @@ void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
   canvas->currentStroke.points = NULL;
   canvas->currentStroke.pointCount = 0;
   canvas->currentStroke.capacity = 0;
+  canvas->currentStroke.usePressure = false;
 
   canvas->backgroundColor = (Color){20, 20, 20, 255};
   canvas->gridColor = (Color){50, 50, 50, 255};

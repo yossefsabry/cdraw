@@ -66,6 +66,7 @@ void ClearCanvas(Canvas *canvas) {
   canvas->currentStroke.points = NULL;
   canvas->currentStroke.pointCount = 0;
   canvas->currentStroke.capacity = 0;
+  canvas->currentStroke.usePressure = false;
   canvas->isDrawing = false;
 
   fprintf(stderr, "Canvas Cleared.\n");

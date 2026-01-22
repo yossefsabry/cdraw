@@ -17,6 +17,7 @@ typedef enum {
 typedef struct {
   float x;
   float y;
+  float width;
 } Point;
 
 typedef struct {
@@ -25,6 +26,7 @@ typedef struct {
   int capacity;
   Color color;
   float thickness;
+  bool usePressure;
 } Stroke;
 
 typedef struct {

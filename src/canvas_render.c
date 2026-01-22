@@ -2,8 +2,139 @@
 #include "raymath.h"
 #include <math.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 static Vector2 PointAsVector2(Point p) { return (Vector2){p.x, p.y}; }
+
+static float PointWidth(const Point *p, float base) {
+  if (p->width > 0.0f)
+    return p->width;
+  return base;
+}
+
+static float ClampFloat(float v, float min, float max) {
+  if (v < min)
+    return min;
+  if (v > max)
+    return max;
+  return v;
+}
+
+static float SmoothStep01(float t) { return t * t * (3.0f - 2.0f * t); }
+
+static float CatmullRom(float p0, float p1, float p2, float p3, float t) {
+  float t2 = t * t;
+  float t3 = t2 * t;
+  return 0.5f * ((2.0f * p1) + (-p0 + p2) * t +
+                 (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+                 (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
+}
+
+static void SmoothPointWidths(Point *points, int count, int passes) {
+  if (count < 3 || passes <= 0)
+    return;
+  float *tmp = (float *)malloc(sizeof(float) * (size_t)count);
+  if (!tmp)
+    return;
+
+  for (int pass = 0; pass < passes; pass++) {
+    tmp[0] = points[0].width;
+    tmp[count - 1] = points[count - 1].width;
+    for (int i = 1; i < count - 1; i++)
+      tmp[i] =
+          (points[i - 1].width + points[i].width * 2.0f + points[i + 1].width) *
+          0.25f;
+    for (int i = 0; i < count; i++)
+      points[i].width = tmp[i];
+  }
+
+  free(tmp);
+}
+
+static void ApplyStrokeTaper(Point *points, int count, float baseWidth) {
+  if (count < 3)
+    return;
+  int taperCount = count / 6;
+  if (taperCount < 2)
+    taperCount = 2;
+  if (taperCount > 8)
+    taperCount = 8;
+  if (taperCount * 2 >= count)
+    taperCount = count / 2;
+  if (taperCount < 1)
+    return;
+
+  float minWidth = fmaxf(0.6f, baseWidth * 0.2f);
+  for (int i = 0; i < taperCount; i++) {
+    float t = (float)(i + 1) / (float)(taperCount + 1);
+    float factor = SmoothStep01(t);
+    points[i].width = minWidth + (points[i].width - minWidth) * factor;
+  }
+  for (int i = 0; i < taperCount; i++) {
+    int idx = count - 1 - i;
+    float t = (float)(i + 1) / (float)(taperCount + 1);
+    float factor = SmoothStep01(t);
+    points[idx].width = minWidth + (points[idx].width - minWidth) * factor;
+  }
+}
+
+static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoints) {
+  if (s->pointCount < 2) {
+    *outPoints = NULL;
+    return 0;
+  }
+
+  const int samplesPerSegment = 5;
+  int segments = s->pointCount - 1;
+  int outCount = segments * samplesPerSegment + 1;
+
+  Point *resampled = (Point *)malloc(sizeof(Point) * (size_t)outCount);
+  if (!resampled) {
+    *outPoints = NULL;
+    return 0;
+  }
+
+  float minWidth = fmaxf(0.4f, baseWidth * 0.18f);
+  float maxWidth = fmaxf(minWidth + 0.5f, baseWidth * 2.2f);
+
+  int index = 0;
+  for (int i = 0; i < segments; i++) {
+    int i0 = (i == 0) ? 0 : i - 1;
+    int i1 = i;
+    int i2 = i + 1;
+    int i3 = (i + 2 < s->pointCount) ? i + 2 : s->pointCount - 1;
+
+    Point p0 = s->points[i0];
+    Point p1 = s->points[i1];
+    Point p2 = s->points[i2];
+    Point p3 = s->points[i3];
+
+    float w0 = PointWidth(&p0, baseWidth);
+    float w1 = PointWidth(&p1, baseWidth);
+    float w2 = PointWidth(&p2, baseWidth);
+    float w3 = PointWidth(&p3, baseWidth);
+
+    for (int j = 0; j < samplesPerSegment; j++) {
+      float t = (float)j / (float)samplesPerSegment;
+      resampled[index].x = CatmullRom(p0.x, p1.x, p2.x, p3.x, t);
+      resampled[index].y = CatmullRom(p0.y, p1.y, p2.y, p3.y, t);
+      resampled[index].width =
+          ClampFloat(CatmullRom(w0, w1, w2, w3, t), minWidth, maxWidth);
+      index++;
+    }
+  }
+
+  Point last = s->points[s->pointCount - 1];
+  resampled[index] =
+      (Point){last.x, last.y, ClampFloat(PointWidth(&last, baseWidth), minWidth, maxWidth)};
+  index++;
+
+  SmoothPointWidths(resampled, index, 2);
+  ApplyStrokeTaper(resampled, index, baseWidth);
+
+  *outPoints = resampled;
+  return index;
+}
 
 static uint32_t HashU32(uint32_t x) {
   x ^= x >> 16;
@@ -158,6 +289,48 @@ static void DrawStrokeSketchyPass(const Point *points, int pointCount, bool clos
   }
 }
 
+static void DrawStrokeVariableWidth(const Stroke *s, float baseWidth, Color color) {
+  if (s->pointCount < 2)
+    return;
+
+  Point *resampled = NULL;
+  int count = ResampleStrokePoints(s, baseWidth, &resampled);
+  if (count < 2 || !resampled) {
+    free(resampled);
+    return;
+  }
+
+  for (int i = 0; i < count - 1; i++) {
+    Vector2 a = PointAsVector2(resampled[i]);
+    Vector2 b = PointAsVector2(resampled[i + 1]);
+    float w0 = resampled[i].width;
+    float w1 = resampled[i + 1].width;
+
+    Vector2 ab = Vector2Subtract(b, a);
+    float len = Vector2Length(ab);
+    if (len <= 0.0001f) {
+      DrawCircleV(a, w0 * 0.5f, color);
+      continue;
+    }
+    Vector2 dir = Vector2Scale(ab, 1.0f / len);
+    Vector2 perp = (Vector2){-dir.y, dir.x};
+
+    Vector2 aL = Vector2Add(a, Vector2Scale(perp, w0 * 0.5f));
+    Vector2 aR = Vector2Subtract(a, Vector2Scale(perp, w0 * 0.5f));
+    Vector2 bL = Vector2Add(b, Vector2Scale(perp, w1 * 0.5f));
+    Vector2 bR = Vector2Subtract(b, Vector2Scale(perp, w1 * 0.5f));
+
+    DrawTriangle(aL, bL, aR, color);
+    DrawTriangle(bL, bR, aR, color);
+
+    DrawCircleV(a, w0 * 0.5f, color);
+    if (i == count - 2)
+      DrawCircleV(b, w1 * 0.5f, color);
+  }
+
+  free(resampled);
+}
+
 static void DrawArrowStroke(const Stroke *s, float thickness, Color color) {
   Vector2 start = PointAsVector2(s->points[0]);
   Vector2 tip = PointAsVector2(s->points[1]);
@@ -286,6 +459,11 @@ static void DrawStroke(const Stroke *s, float thickness, Color color) {
 
   if (StrokeLooksLikeArrow(s)) {
     DrawArrowStroke(s, thickness, color);
+    return;
+  }
+
+  if (s->usePressure) {
+    DrawStrokeVariableWidth(s, thickness, color);
     return;
   }
 

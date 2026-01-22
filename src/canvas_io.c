@@ -7,14 +7,16 @@ bool SaveCanvasToFile(const Canvas *canvas, const char *path) {
   FILE *f = fopen(path, "wb");
   if (!f)
     return false;
-  fprintf(f, "CDRAW1\n");
+  fprintf(f, "CDRAW2\n");
   fprintf(f, "strokes %d\n", canvas->strokeCount);
   for (int i = 0; i < canvas->strokeCount; i++) {
     const Stroke *s = &canvas->strokes[i];
-    fprintf(f, "stroke %u %u %u %u %.3f %d\n", s->color.r, s->color.g, s->color.b,
-            s->color.a, s->thickness, s->pointCount);
+    fprintf(f, "stroke %u %u %u %u %.3f %d %d\n", s->color.r, s->color.g,
+            s->color.b, s->color.a, s->thickness, s->pointCount,
+            s->usePressure ? 1 : 0);
     for (int p = 0; p < s->pointCount; p++)
-      fprintf(f, "%.6f %.6f\n", s->points[p].x, s->points[p].y);
+      fprintf(f, "%.6f %.6f %.6f\n", s->points[p].x, s->points[p].y,
+              s->points[p].width);
   }
   fclose(f);
   return true;
@@ -26,9 +28,18 @@ bool LoadCanvasFromFile(Canvas *canvas, const char *path) {
     return false;
 
   char header[32] = {0};
-  if (!fgets(header, (int)sizeof(header), f) || strncmp(header, "CDRAW1", 5) != 0) {
+  bool isV1 = false;
+  if (!fgets(header, (int)sizeof(header), f)) {
     fclose(f);
     return false;
+  }
+  if (strncmp(header, "CDRAW2", 5) != 0) {
+    if (strncmp(header, "CDRAW1", 5) == 0)
+      isV1 = true;
+    else {
+      fclose(f);
+      return false;
+    }
   }
 
   ClearCanvas(canvas);
@@ -45,9 +56,18 @@ bool LoadCanvasFromFile(Canvas *canvas, const char *path) {
     unsigned int r, g, b, a;
     float thickness;
     int pointCount;
-    if (fscanf(f, "%31s %u %u %u %u %f %d", tok, &r, &g, &b, &a, &thickness,
-               &pointCount) != 7 ||
-        strcmp(tok, "stroke") != 0 || pointCount < 0) {
+    int usePressure = 0;
+    if (isV1) {
+      if (fscanf(f, "%31s %u %u %u %u %f %d", tok, &r, &g, &b, &a, &thickness,
+                 &pointCount) != 7 ||
+          strcmp(tok, "stroke") != 0 || pointCount < 0) {
+        fclose(f);
+        ClearCanvas(canvas);
+        return false;
+      }
+    } else if (fscanf(f, "%31s %u %u %u %u %f %d %d", tok, &r, &g, &b, &a,
+                      &thickness, &pointCount, &usePressure) != 8 ||
+               strcmp(tok, "stroke") != 0 || pointCount < 0) {
       fclose(f);
       ClearCanvas(canvas);
       return false;
@@ -57,6 +77,7 @@ bool LoadCanvasFromFile(Canvas *canvas, const char *path) {
     s.color = (Color){(unsigned char)r, (unsigned char)g, (unsigned char)b,
                       (unsigned char)a};
     s.thickness = thickness;
+    s.usePressure = (usePressure != 0) && !isV1;
     s.pointCount = pointCount;
     s.capacity = pointCount;
     if (pointCount > 0) {
@@ -67,14 +88,21 @@ bool LoadCanvasFromFile(Canvas *canvas, const char *path) {
         return false;
       }
       for (int p = 0; p < pointCount; p++) {
-        float x, y;
-        if (fscanf(f, "%f %f", &x, &y) != 2) {
+        float x, y, w = 0.0f;
+        if (isV1) {
+          if (fscanf(f, "%f %f", &x, &y) != 2) {
+            free(s.points);
+            fclose(f);
+            ClearCanvas(canvas);
+            return false;
+          }
+        } else if (fscanf(f, "%f %f %f", &x, &y, &w) != 3) {
           free(s.points);
           fclose(f);
           ClearCanvas(canvas);
           return false;
         }
-        s.points[p] = (Point){x, y};
+        s.points[p] = (Point){x, y, w};
       }
     }
     AddStroke(canvas, s);
@@ -83,4 +111,3 @@ bool LoadCanvasFromFile(Canvas *canvas, const char *path) {
   fclose(f);
   return true;
 }
-
