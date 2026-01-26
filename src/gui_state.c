@@ -1,5 +1,6 @@
 #include "gui_internal.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void GuiToastSet(GuiState *gui, const char *msg) {
@@ -10,6 +11,10 @@ void GuiToastSet(GuiState *gui, const char *msg) {
 void UnloadGui(GuiState *gui) {
   GuiFontUnload(gui);
   GuiIconsUnload(&gui->icons);
+  if (gui->fileDialogEntries) {
+    free(gui->fileDialogEntries);
+    gui->fileDialogEntries = NULL;
+  }
 }
 
 void InitGui(GuiState *gui) {
@@ -41,7 +46,20 @@ void InitGui(GuiState *gui) {
   gui->menuRect = (Rectangle){0, 0, 200, 220};
   gui->requestExit = false;
 
-  snprintf(gui->currentFile, sizeof(gui->currentFile), "%s", "drawing.cdraw");
+  gui->currentFile[0] = '\0';
+  gui->hasFilePath = false;
+  gui->lastDir[0] = '\0';
+  gui->showFileDialog = false;
+  gui->fileDialogIsSave = false;
+  gui->fileDialogDir[0] = '\0';
+  snprintf(gui->fileDialogName, sizeof(gui->fileDialogName), "%s",
+           "drawing.cdraw");
+  gui->fileDialogEntries = NULL;
+  gui->fileDialogEntryCount = 0;
+  gui->fileDialogSelected = -1;
+  gui->fileDialogScroll = 0;
+  gui->fileDialogLastClickTime = 0.0;
+  gui->fileDialogLastClickIndex = -1;
   gui->toast[0] = '\0';
   gui->toastUntil = 0.0;
 
@@ -51,6 +69,8 @@ void InitGui(GuiState *gui) {
 
 bool IsMouseOverGui(GuiState *gui) {
   if (gui->showWelcome)
+    return true;
+  if (gui->showFileDialog)
     return true;
 
   const float topH = 88.0f;

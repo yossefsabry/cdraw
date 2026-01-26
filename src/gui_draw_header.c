@@ -22,6 +22,7 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
                     t.hover, t.text, iconIdle, iconHover)) {
     ClearCanvas(canvas);
+    GuiMarkNewDocument(gui);
     GuiToastSet(gui, "Cleared.");
   }
 
@@ -29,6 +30,7 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   if (GuiIconButton(&gui->icons, newBtn, gui->icons.add, false, t.hover, t.hover,
                     t.text, iconIdle, iconHover)) {
     ClearCanvas(canvas);
+    GuiMarkNewDocument(gui);
     GuiToastSet(gui, "New canvas.");
   }
 

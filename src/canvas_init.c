@@ -14,7 +14,7 @@ void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
   canvas->camera.target = (Vector2){0.0f, 0.0f};
   canvas->camera.offset = (Vector2){screenWidth / 2.0f, screenHeight / 2.0f};
   canvas->camera.rotation = 0.0f;
-  canvas->camera.zoom = 1.0f;
+  canvas->camera.zoom = DEFAULT_ZOOM;
 
   canvas->isDrawing = false;
   canvas->showGrid = true;

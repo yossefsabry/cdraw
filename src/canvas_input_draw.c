@@ -22,10 +22,10 @@ static float ClampFloat(float v, float min, float max) {
 }
 
 static float PenWidthFromSpeed(float base, float speed) {
-  float minW = fmaxf(1.0f, base * 0.55f);
-  float maxW = fmaxf(minW + 0.5f, base * 1.8f);
-  float slow = 80.0f;
-  float fast = 1200.0f;
+  float minW = fmaxf(1.0f, base * 0.70f);
+  float maxW = fmaxf(minW + 0.4f, base * 1.40f);
+  float slow = 60.0f;
+  float fast = 1400.0f;
   float t = ClampFloat((speed - slow) / (fast - slow), 0.0f, 1.0f);
   return maxW + (minW - maxW) * t;
 }

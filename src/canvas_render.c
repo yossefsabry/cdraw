@@ -54,17 +54,17 @@ static void SmoothPointWidths(Point *points, int count, int passes) {
 static void ApplyStrokeTaper(Point *points, int count, float baseWidth) {
   if (count < 3)
     return;
-  int taperCount = count / 6;
-  if (taperCount < 2)
-    taperCount = 2;
-  if (taperCount > 8)
-    taperCount = 8;
+  int taperCount = count / 4;
+  if (taperCount < 3)
+    taperCount = 3;
+  if (taperCount > 12)
+    taperCount = 12;
   if (taperCount * 2 >= count)
     taperCount = count / 2;
   if (taperCount < 1)
     return;
 
-  float minWidth = fmaxf(0.6f, baseWidth * 0.2f);
+  float minWidth = fmaxf(0.45f, baseWidth * 0.15f);
   for (int i = 0; i < taperCount; i++) {
     float t = (float)(i + 1) / (float)(taperCount + 1);
     float factor = SmoothStep01(t);
@@ -84,7 +84,7 @@ static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoi
     return 0;
   }
 
-  const int samplesPerSegment = 5;
+  const int samplesPerSegment = 7;
   int segments = s->pointCount - 1;
   int outCount = segments * samplesPerSegment + 1;
 
@@ -129,7 +129,7 @@ static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoi
       (Point){last.x, last.y, ClampFloat(PointWidth(&last, baseWidth), minWidth, maxWidth)};
   index++;
 
-  SmoothPointWidths(resampled, index, 2);
+  SmoothPointWidths(resampled, index, 3);
   ApplyStrokeTaper(resampled, index, baseWidth);
 
   *outPoints = resampled;

@@ -24,18 +24,16 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
 
   if (MenuItem(gui, (Rectangle){x, y + h * 0, w, h}, "New (Ctrl+N)", t)) {
     ClearCanvas(canvas);
+    GuiMarkNewDocument(gui);
     GuiToastSet(gui, "New canvas.");
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 1, w, h}, "Open (Ctrl+O)", t)) {
-    GuiToastSet(gui,
-               LoadCanvasFromFile(canvas, gui->currentFile) ? "Loaded."
-                                                           : "Load failed.");
+    GuiRequestOpen(gui, canvas);
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 2, w, h}, "Save (Ctrl+S)", t)) {
-    GuiToastSet(gui, SaveCanvasToFile(canvas, gui->currentFile) ? "Saved."
-                                                               : "Save failed.");
+    GuiRequestSave(gui, canvas);
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 3, w, h}, "Toggle Grid (G)", t)) {

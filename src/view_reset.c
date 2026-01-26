@@ -7,8 +7,7 @@ void ResetCanvasView(Canvas *canvas) {
   canvas->camera.offset =
       (Vector2){GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
   canvas->camera.rotation = 0.0f;
-  canvas->camera.zoom = 1.0f;
+  canvas->camera.zoom = DEFAULT_ZOOM;
 
   canvas->isDraggingSelection = false;
 }
-

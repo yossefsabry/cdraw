@@ -42,10 +42,18 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
                       int sh);
 void GuiDrawWelcome(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh);
 void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t);
+void GuiDrawFileDialog(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh);
 void GuiDrawPalette(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                     Color iconHover, int sw, int sh, float paletteX,
                     float paletteY, float paletteW, float paletteH);
 void GuiDrawColorPicker(GuiState *gui, Theme t);
 void GuiDrawFooter(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh);
+
+void GuiMarkNewDocument(GuiState *gui);
+void GuiRequestOpen(GuiState *gui, Canvas *canvas);
+void GuiRequestSave(GuiState *gui, Canvas *canvas);
+void GuiFileDialogConfirm(GuiState *gui, Canvas *canvas);
+void GuiFileDialogCancel(GuiState *gui);
+void GuiFileDialogEnterDirectory(GuiState *gui, const char *dir);
 
 #endif

@@ -3,6 +3,8 @@
 
 #include "raylib.h"
 
+#define DEFAULT_ZOOM 5.0f
+
 // Define available tools here to be shared
 typedef enum {
   TOOL_PEN = 0,

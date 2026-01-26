@@ -4,6 +4,13 @@
 #include "canvas.h"
 #include "raylib.h"
 
+typedef struct FileDialogEntry {
+  char path[256];
+  char name[128];
+  bool isDir;
+  bool isUp;
+} FileDialogEntry;
+
 // ToolType is defined in canvas.h
 
 typedef struct {
@@ -81,6 +88,18 @@ typedef struct {
   bool isTyping;
 
   char currentFile[256];
+  bool hasFilePath;
+  char lastDir[256];
+  bool showFileDialog;
+  bool fileDialogIsSave;
+  char fileDialogDir[256];
+  char fileDialogName[256];
+  FileDialogEntry *fileDialogEntries;
+  int fileDialogEntryCount;
+  int fileDialogSelected;
+  int fileDialogScroll;
+  double fileDialogLastClickTime;
+  int fileDialogLastClickIndex;
   char toast[128];
   double toastUntil;
 
