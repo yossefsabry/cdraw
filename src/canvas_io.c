@@ -162,6 +162,12 @@ static bool LoadCanvasFromText(Canvas *canvas, FILE *f) {
                       (unsigned char)a};
     s.thickness = thickness;
     s.usePressure = (usePressure != 0) && !isV1;
+    s.cachedPoints = NULL;
+    s.cachedCount = 0;
+    s.cachedCapacity = 0;
+    s.cacheVersion = 1;
+    s.lastBuiltVersion = 0;
+    s.cacheDirty = true;
     s.pointCount = pointCount;
     s.capacity = pointCount;
     if (pointCount > 0) {
@@ -272,6 +278,12 @@ static bool LoadCanvasFromBinary(Canvas *canvas, FILE *f) {
     s.color = (Color){color[0], color[1], color[2], color[3]};
     s.thickness = thickness;
     s.usePressure = (usePressure != 0);
+    s.cachedPoints = NULL;
+    s.cachedCount = 0;
+    s.cachedCapacity = 0;
+    s.cacheVersion = 1;
+    s.lastBuiltVersion = 0;
+    s.cacheDirty = true;
     s.pointCount = (int)pointCount;
     s.capacity = (int)pointCount;
     if (pointCount > 0) {

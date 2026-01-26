@@ -2,6 +2,7 @@
 #define CANVAS_H
 
 #include "raylib.h"
+#include <stdint.h>
 
 #define DEFAULT_ZOOM 5.0f
 
@@ -29,6 +30,12 @@ typedef struct {
   Color color;
   float thickness;
   bool usePressure;
+  Point *cachedPoints;
+  int cachedCount;
+  int cachedCapacity;
+  uint32_t cacheVersion;
+  uint32_t lastBuiltVersion;
+  bool cacheDirty;
 } Stroke;
 
 typedef struct {

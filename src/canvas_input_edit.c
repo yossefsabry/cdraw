@@ -53,6 +53,8 @@ static void TranslateStroke(Stroke *s, Vector2 delta) {
     s->points[i].x += delta.x;
     s->points[i].y += delta.y;
   }
+  s->cacheDirty = true;
+  s->cacheVersion++;
 }
 
 static void RemoveStrokeAtIndex(Canvas *canvas, int index) {
@@ -60,6 +62,7 @@ static void RemoveStrokeAtIndex(Canvas *canvas, int index) {
     return;
   canvas->totalPoints -= canvas->strokes[index].pointCount;
   free(canvas->strokes[index].points);
+  free(canvas->strokes[index].cachedPoints);
   for (int i = index; i < canvas->strokeCount - 1; i++)
     canvas->strokes[i] = canvas->strokes[i + 1];
   canvas->strokeCount--;

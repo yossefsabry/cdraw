@@ -37,14 +37,14 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     Rectangle openBtn = {tx, btnY, btnS, btnS};
     if (GuiIconButton(&gui->icons, openBtn, gui->icons.openFile, false, t.hover,
                       t.hover, t.text, iconIdle, iconHover)) {
-        GuiRequestOpen(gui, canvas);
+        GuiRequestOpen(gui);
     }
     tx += btnS;
 
     Rectangle saveBtn = {tx, btnY, btnS, btnS};
     if (GuiIconButton(&gui->icons, saveBtn, gui->icons.saveFile, false, t.hover,
                       t.hover, t.text, iconIdle, iconHover)) {
-        GuiRequestSave(gui, canvas);
+        GuiRequestSave(gui, GuiGetActiveDocument(gui));
     }
     tx += btnS + 10;
     Divider(tx, ty + 10, 28, t.border);

@@ -22,6 +22,12 @@ void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
   canvas->currentStroke.pointCount = 0;
   canvas->currentStroke.capacity = 0;
   canvas->currentStroke.usePressure = false;
+  canvas->currentStroke.cachedPoints = NULL;
+  canvas->currentStroke.cachedCount = 0;
+  canvas->currentStroke.cachedCapacity = 0;
+  canvas->currentStroke.cacheVersion = 0;
+  canvas->currentStroke.lastBuiltVersion = 0;
+  canvas->currentStroke.cacheDirty = false;
 
   canvas->backgroundColor = (Color){20, 20, 20, 255};
   canvas->gridColor = (Color){50, 50, 50, 255};
@@ -33,14 +39,19 @@ void InitCanvas(Canvas *canvas, int screenWidth, int screenHeight) {
 }
 
 void FreeCanvas(Canvas *canvas) {
-  for (int i = 0; i < canvas->strokeCount; i++)
+  for (int i = 0; i < canvas->strokeCount; i++) {
     free(canvas->strokes[i].points);
+    free(canvas->strokes[i].cachedPoints);
+  }
   free(canvas->strokes);
 
-  for (int i = 0; i < canvas->redoCount; i++)
+  for (int i = 0; i < canvas->redoCount; i++) {
     free(canvas->redoStrokes[i].points);
+    free(canvas->redoStrokes[i].cachedPoints);
+  }
   free(canvas->redoStrokes);
 
   free(canvas->currentStroke.points);
+  free(canvas->currentStroke.cachedPoints);
   canvas->currentStroke.points = NULL;
 }

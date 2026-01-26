@@ -2,12 +2,15 @@ CC ?= gcc
 
 DEBUG ?= 0
 CFLAGS ?= -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0)
+GTK_LIBS := $(shell pkg-config --libs gtk+-3.0)
 ifeq ($(DEBUG),1)
   CFLAGS += -g -O0
 else
   CFLAGS += -O2 -DNDEBUG
 endif
-LDFLAGS = -lraylib -lm -lpthread -ldl -lrt -lX11
+LDFLAGS = -lraylib -lm -lpthread -ldl -lrt -lX11 $(GTK_LIBS)
+CFLAGS += $(GTK_CFLAGS)
 
 SRC_DIR = src
 OBJ_DIR = obj

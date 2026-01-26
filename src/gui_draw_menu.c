@@ -29,11 +29,11 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 1, w, h}, "Open (Ctrl+O)", t)) {
-    GuiRequestOpen(gui, canvas);
+    GuiRequestOpen(gui);
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 2, w, h}, "Save (Ctrl+S)", t)) {
-    GuiRequestSave(gui, canvas);
+    GuiRequestSave(gui, GuiGetActiveDocument(gui));
     gui->showMenu = false;
   }
   if (MenuItem(gui, (Rectangle){x, y + h * 3, w, h}, "Toggle Grid (G)", t)) {

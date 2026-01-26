@@ -10,27 +10,47 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   DrawCircle(40, 20, 6, (Color){234, 179, 8, 255});
   DrawCircle(60, 20, 6, (Color){34, 197, 94, 255});
 
-  Rectangle tab = {90, 8, 150, 32};
-  DrawRectangleRounded(tab, 0.20f, 6, t.tab);
-  DrawRectangleRoundedLinesEx(tab, 0.20f, 6, 1.0f, t.border);
-  GuiDrawIconTexture(&gui->icons, gui->icons.pen,
-                     (Rectangle){tab.x + 8, tab.y + 6, 18, 18}, t.primary);
-  DrawTextEx(gui->uiFont, "Untitled Sketch", (Vector2){tab.x + 30, tab.y + 9},
-             12, 1.0f, t.text);
+  float tabX = 90.0f;
+  float tabY = 8.0f;
+  float tabW = 150.0f;
+  float tabH = 32.0f;
+  float tabGap = 8.0f;
 
-  Rectangle tabClose = {tab.x + tab.width - 24, tab.y + 6, 18, 18};
-  if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
-                    t.hover, t.text, iconIdle, iconHover)) {
-    ClearCanvas(canvas);
-    GuiMarkNewDocument(gui);
-    GuiToastSet(gui, "Cleared.");
+  Vector2 mouse = GetMousePosition();
+  for (int i = 0; i < gui->documentCount; i++) {
+    Rectangle tab = {tabX + i * (tabW + tabGap), tabY, tabW, tabH};
+    DrawRectangleRounded(tab, 0.20f, 6, t.tab);
+    DrawRectangleRoundedLinesEx(tab, 0.20f, 6, 1.0f, t.border);
+    GuiDrawIconTexture(&gui->icons, gui->icons.pen,
+                       (Rectangle){tab.x + 8, tab.y + 6, 18, 18}, t.primary);
+
+    Document *doc = &gui->documents[i];
+    const char *label =
+        doc->hasPath ? GetFileName(doc->path) : "Untitled Sketch";
+    DrawTextEx(gui->uiFont, label, (Vector2){tab.x + 30, tab.y + 9}, 12, 1.0f,
+               t.text);
+
+    Rectangle tabClose = {tab.x + tab.width - 24, tab.y + 6, 18, 18};
+    if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
+                      t.hover, t.text, iconIdle, iconHover)) {
+      bool showGrid = doc->canvas.showGrid;
+      GuiCloseDocument(gui, i, GetScreenWidth(), GetScreenHeight(), showGrid);
+      GuiToastSet(gui, "Closed.");
+      return;
+    }
+
+    if (CheckCollisionPointRec(mouse, tab) &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      gui->activeDocument = i;
+    }
   }
 
-  Rectangle newBtn = {tab.x + tab.width + 8, 9, 26, 26};
+  Rectangle newBtn = {tabX + gui->documentCount * (tabW + tabGap), 9, 26, 26};
   if (GuiIconButton(&gui->icons, newBtn, gui->icons.add, false, t.hover, t.hover,
                     t.text, iconIdle, iconHover)) {
-    ClearCanvas(canvas);
-    GuiMarkNewDocument(gui);
+    Document *active = GuiGetActiveDocument(gui);
+    bool showGrid = active ? active->canvas.showGrid : true;
+    GuiAddDocument(gui, GetScreenWidth(), GetScreenHeight(), showGrid, true);
     GuiToastSet(gui, "New canvas.");
   }
 
@@ -41,30 +61,30 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
   float rx = (float)sw - 120;
   Rectangle darkBtn = {rx, 7, 26, 26};
-  if (CheckCollisionPointRec(GetMousePosition(), darkBtn))
+  if (CheckCollisionPointRec(mouse, darkBtn))
     DrawRectangleRounded(darkBtn, 0.25f, 6, t.hover);
   GuiDrawIconTexture(&gui->icons,
                      gui->darkMode ? gui->icons.lightMode : gui->icons.darkMode,
                      darkBtn, iconIdle);
-  if (CheckCollisionPointRec(GetMousePosition(), darkBtn) &&
+  if (CheckCollisionPointRec(mouse, darkBtn) &&
       IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
     gui->darkMode = !gui->darkMode;
     GuiToastSet(gui, gui->darkMode ? "Dark mode." : "Light mode.");
   }
 
   Rectangle minBtn = {rx + 30, 7, 26, 26};
-  if (CheckCollisionPointRec(GetMousePosition(), minBtn))
+  if (CheckCollisionPointRec(mouse, minBtn))
     DrawRectangleRounded(minBtn, 0.25f, 6, t.hover);
   GuiDrawIconTexture(&gui->icons, gui->icons.windowMinimize, minBtn, iconIdle);
-  if (CheckCollisionPointRec(GetMousePosition(), minBtn) &&
+  if (CheckCollisionPointRec(mouse, minBtn) &&
       IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
     MinimizeWindow();
 
   Rectangle maxBtn = {rx + 60, 7, 26, 26};
-  if (CheckCollisionPointRec(GetMousePosition(), maxBtn))
+  if (CheckCollisionPointRec(mouse, maxBtn))
     DrawRectangleRounded(maxBtn, 0.25f, 6, t.hover);
   GuiDrawIconTexture(&gui->icons, gui->icons.windowToggleSize, maxBtn, iconIdle);
-  if (CheckCollisionPointRec(GetMousePosition(), maxBtn) &&
+  if (CheckCollisionPointRec(mouse, maxBtn) &&
       IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
     if (IsWindowMaximized())
       RestoreWindow();

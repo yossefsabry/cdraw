@@ -1,7 +1,6 @@
 #include "gui_internal.h"
 #include "prefs.h"
 #include "raymath.h"
-#include <string.h>
 
 static bool IsPanningNow(int activeTool, bool inputCaptured) {
   bool isPanning = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
@@ -14,34 +13,6 @@ static bool IsPanningNow(int activeTool, bool inputCaptured) {
   return isPanning;
 }
 
-static void HandleFileDialogInput(GuiState *gui, Canvas *canvas) {
-  gui->isTyping = gui->fileDialogIsSave;
-
-  if (gui->fileDialogIsSave) {
-    int key = GetCharPressed();
-    while (key > 0) {
-      if (key >= 32 && key <= 126) {
-        size_t len = strlen(gui->fileDialogName);
-        if (len + 1 < sizeof(gui->fileDialogName)) {
-          gui->fileDialogName[len] = (char)key;
-          gui->fileDialogName[len + 1] = '\0';
-        }
-      }
-      key = GetCharPressed();
-    }
-
-    if (IsKeyPressed(KEY_BACKSPACE)) {
-      size_t len = strlen(gui->fileDialogName);
-      if (len > 0)
-        gui->fileDialogName[len - 1] = '\0';
-    }
-  }
-
-  if (IsKeyPressed(KEY_ENTER))
-    GuiFileDialogConfirm(gui, canvas);
-  if (IsKeyPressed(KEY_ESCAPE))
-    GuiFileDialogCancel(gui);
-}
 
 void UpdateCursor(GuiState *gui, const Canvas *canvas, bool mouseOverGui) {
   int cursor = MOUSE_CURSOR_DEFAULT;
@@ -144,8 +115,6 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
       gui->hasSeenWelcome = true;
       GuiToastSet(gui, "Welcome!");
     }
-  } else if (gui->showFileDialog) {
-    HandleFileDialogInput(gui, canvas);
   } else {
     float wheel = GetMouseWheelMove();
     if (ctrl && shift && wheel != 0.0f) {
@@ -160,9 +129,9 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
     if (ctrl && IsKeyPressed(KEY_Y))
       Redo(canvas);
     if (ctrl && IsKeyPressed(KEY_S))
-      GuiRequestSave(gui, canvas);
+      GuiRequestSave(gui, GuiGetActiveDocument(gui));
     if (ctrl && IsKeyPressed(KEY_O))
-      GuiRequestOpen(gui, canvas);
+      GuiRequestOpen(gui);
     if (ctrl && IsKeyPressed(KEY_N)) {
       ClearCanvas(canvas);
       GuiMarkNewDocument(gui);

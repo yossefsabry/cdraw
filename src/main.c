@@ -11,16 +11,13 @@ int main(void) {
   InitWindow(screenWidth, screenHeight, "cdraw - Vector Drawing");
   SetExitKey(KEY_NULL);
 
-  Canvas canvas;
-  InitCanvas(&canvas, screenWidth, screenHeight);
-
   GuiState gui;
   InitGui(&gui);
 
   AppPrefs prefs = PrefsDefaults();
   (void)PrefsLoad(&prefs);
   gui.darkMode = prefs.darkMode;
-  canvas.showGrid = prefs.showGrid;
+  GuiDocumentsInit(&gui, screenWidth, screenHeight, prefs.showGrid);
   gui.hasSeenWelcome = prefs.hasSeenWelcome;
   gui.showWelcome = !prefs.hasSeenWelcome;
   if (gui.showWelcome)
@@ -31,27 +28,31 @@ int main(void) {
   while (!WindowShouldClose() && !gui.requestExit) {
     // Update
     bool mouseOverGui = IsMouseOverGui(&gui);
+    Canvas *canvas = GuiGetActiveCanvas(&gui);
+    if (!canvas)
+      continue;
 
-    UpdateGui(&gui, &canvas);
-    UpdateCanvasState(&canvas, mouseOverGui, gui.activeTool);
-    UpdateCursor(&gui, &canvas, mouseOverGui);
+    UpdateGui(&gui, canvas);
+    UpdateCanvasState(canvas, mouseOverGui, gui.activeTool);
+    UpdateCursor(&gui, canvas, mouseOverGui);
 
     // Draw
     BeginDrawing();
-    DrawCanvas(&canvas);
-    DrawGui(&gui, &canvas);
-    DrawCursorOverlay(&gui, &canvas, mouseOverGui);
+    DrawCanvas(canvas);
+    DrawGui(&gui, canvas);
+    DrawCursorOverlay(&gui, canvas, mouseOverGui);
     EndDrawing();
   }
 
   AppPrefs finalPrefs = PrefsDefaults();
   finalPrefs.darkMode = gui.darkMode;
-  finalPrefs.showGrid = canvas.showGrid;
+  Document *doc = GuiGetActiveDocument(&gui);
+  finalPrefs.showGrid = doc ? doc->canvas.showGrid : prefs.showGrid;
   finalPrefs.hasSeenWelcome = gui.hasSeenWelcome;
   (void)PrefsSave(&finalPrefs);
 
+  GuiDocumentsFree(&gui);
   UnloadGui(&gui);
-  FreeCanvas(&canvas);
   ShowCursor();
   SetMouseCursor(MOUSE_CURSOR_DEFAULT);
   CloseWindow();

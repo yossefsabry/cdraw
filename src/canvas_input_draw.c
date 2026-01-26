@@ -11,6 +11,8 @@ static void AddPoint(Stroke *stroke, Point p) {
         (Point *)realloc(stroke->points, sizeof(Point) * (size_t)stroke->capacity);
   }
   stroke->points[stroke->pointCount++] = p;
+  stroke->cacheDirty = true;
+  stroke->cacheVersion++;
 }
 
 static float ClampFloat(float v, float min, float max) {
@@ -93,6 +95,12 @@ void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanni
       canvas->currentStroke.capacity = 0;
       canvas->currentStroke.points = NULL;
       canvas->currentStroke.usePressure = (activeTool == TOOL_PEN);
+      canvas->currentStroke.cachedPoints = NULL;
+      canvas->currentStroke.cachedCount = 0;
+      canvas->currentStroke.cachedCapacity = 0;
+      canvas->currentStroke.cacheVersion = 0;
+      canvas->currentStroke.lastBuiltVersion = 0;
+      canvas->currentStroke.cacheDirty = true;
       if (canvas->currentStroke.thickness == 0)
         canvas->currentStroke.thickness = 3.0f;
       float startWidth =
@@ -158,9 +166,22 @@ void CanvasInputHandleDrawTools(Canvas *canvas, bool inputCaptured, bool isPanni
     canvas->currentStroke.points = NULL;
     canvas->currentStroke.pointCount = 0;
     canvas->currentStroke.capacity = 0;
+    canvas->currentStroke.cachedPoints = NULL;
+    canvas->currentStroke.cachedCount = 0;
+    canvas->currentStroke.cachedCapacity = 0;
+    canvas->currentStroke.cacheVersion = 0;
+    canvas->currentStroke.lastBuiltVersion = 0;
+    canvas->currentStroke.cacheDirty = false;
   } else {
     free(canvas->currentStroke.points);
+    free(canvas->currentStroke.cachedPoints);
     canvas->currentStroke.points = NULL;
     canvas->currentStroke.pointCount = 0;
+    canvas->currentStroke.cachedPoints = NULL;
+    canvas->currentStroke.cachedCount = 0;
+    canvas->currentStroke.cachedCapacity = 0;
+    canvas->currentStroke.cacheVersion = 0;
+    canvas->currentStroke.lastBuiltVersion = 0;
+    canvas->currentStroke.cacheDirty = false;
   }
 }

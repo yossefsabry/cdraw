@@ -11,10 +11,6 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
     return;
   }
 
-  if (gui->showFileDialog) {
-    GuiDrawFileDialog(gui, canvas, t, sw, sh);
-    return;
-  }
 
   const float footerH = 24.0f;
   const float paletteW = 280.0f;

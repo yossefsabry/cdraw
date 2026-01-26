@@ -4,6 +4,42 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+static float *gWidthScratch = NULL;
+static int gWidthScratchCapacity = 0;
+
+static float *EnsureWidthScratch(int count) {
+  if (count <= 0)
+    return NULL;
+  if (gWidthScratchCapacity >= count)
+    return gWidthScratch;
+  int newCap = (gWidthScratchCapacity == 0) ? 64 : gWidthScratchCapacity;
+  while (newCap < count)
+    newCap *= 2;
+  float *next = (float *)realloc(gWidthScratch, sizeof(float) * (size_t)newCap);
+  if (!next)
+    return NULL;
+  gWidthScratch = next;
+  gWidthScratchCapacity = newCap;
+  return gWidthScratch;
+}
+
+static bool EnsureStrokeCache(Stroke *s, int needed) {
+  if (needed <= 0)
+    return false;
+  if (s->cachedCapacity >= needed)
+    return true;
+  int newCap = (s->cachedCapacity == 0) ? 64 : s->cachedCapacity;
+  while (newCap < needed)
+    newCap *= 2;
+  Point *next =
+      (Point *)realloc(s->cachedPoints, sizeof(Point) * (size_t)newCap);
+  if (!next)
+    return false;
+  s->cachedPoints = next;
+  s->cachedCapacity = newCap;
+  return true;
+}
+
 static Vector2 PointAsVector2(Point p) { return (Vector2){p.x, p.y}; }
 
 static float PointWidth(const Point *p, float base) {
@@ -33,7 +69,7 @@ static float CatmullRom(float p0, float p1, float p2, float p3, float t) {
 static void SmoothPointWidths(Point *points, int count, int passes) {
   if (count < 3 || passes <= 0)
     return;
-  float *tmp = (float *)malloc(sizeof(float) * (size_t)count);
+  float *tmp = EnsureWidthScratch(count);
   if (!tmp)
     return;
 
@@ -48,7 +84,6 @@ static void SmoothPointWidths(Point *points, int count, int passes) {
       points[i].width = tmp[i];
   }
 
-  free(tmp);
 }
 
 static void ApplyStrokeTaper(Point *points, int count, float baseWidth) {
@@ -78,9 +113,9 @@ static void ApplyStrokeTaper(Point *points, int count, float baseWidth) {
   }
 }
 
-static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoints) {
+static int BuildStrokeCache(Stroke *s, float baseWidth) {
   if (s->pointCount < 2) {
-    *outPoints = NULL;
+    s->cachedCount = 0;
     return 0;
   }
 
@@ -88,11 +123,11 @@ static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoi
   int segments = s->pointCount - 1;
   int outCount = segments * samplesPerSegment + 1;
 
-  Point *resampled = (Point *)malloc(sizeof(Point) * (size_t)outCount);
-  if (!resampled) {
-    *outPoints = NULL;
+  if (!EnsureStrokeCache(s, outCount)) {
+    s->cachedCount = 0;
     return 0;
   }
+  Point *resampled = s->cachedPoints;
 
   float minWidth = fmaxf(0.4f, baseWidth * 0.18f);
   float maxWidth = fmaxf(minWidth + 0.5f, baseWidth * 2.2f);
@@ -132,7 +167,7 @@ static int ResampleStrokePoints(const Stroke *s, float baseWidth, Point **outPoi
   SmoothPointWidths(resampled, index, 3);
   ApplyStrokeTaper(resampled, index, baseWidth);
 
-  *outPoints = resampled;
+  s->cachedCount = index;
   return index;
 }
 
@@ -289,16 +324,19 @@ static void DrawStrokeSketchyPass(const Point *points, int pointCount, bool clos
   }
 }
 
-static void DrawStrokeVariableWidth(const Stroke *s, float baseWidth, Color color) {
+static void DrawStrokeVariableWidth(Stroke *s, float baseWidth, Color color) {
   if (s->pointCount < 2)
     return;
 
-  Point *resampled = NULL;
-  int count = ResampleStrokePoints(s, baseWidth, &resampled);
-  if (count < 2 || !resampled) {
-    free(resampled);
-    return;
+  if (s->cacheDirty || s->cacheVersion != s->lastBuiltVersion || s->cachedCount < 2) {
+    int built = BuildStrokeCache(s, baseWidth);
+    if (built < 2)
+      return;
+    s->cacheDirty = false;
+    s->lastBuiltVersion = s->cacheVersion;
   }
+  Point *resampled = s->cachedPoints;
+  int count = s->cachedCount;
 
   for (int i = 0; i < count - 1; i++) {
     Vector2 a = PointAsVector2(resampled[i]);
@@ -328,7 +366,6 @@ static void DrawStrokeVariableWidth(const Stroke *s, float baseWidth, Color colo
       DrawCircleV(b, w1 * 0.5f, color);
   }
 
-  free(resampled);
 }
 
 static void DrawArrowStroke(const Stroke *s, float thickness, Color color) {
@@ -453,7 +490,7 @@ static void DrawStrokeSolid(const Stroke *s, float thickness, Color color) {
                           thickness, color);
 }
 
-static void DrawStroke(const Stroke *s, float thickness, Color color) {
+static void DrawStroke(Stroke *s, float thickness, Color color) {
   if (s->pointCount < 2)
     return;
 

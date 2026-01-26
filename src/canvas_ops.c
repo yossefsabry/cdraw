@@ -3,8 +3,10 @@
 #include <stdlib.h>
 
 static void ClearRedo(Canvas *canvas) {
-  for (int i = 0; i < canvas->redoCount; i++)
+  for (int i = 0; i < canvas->redoCount; i++) {
     free(canvas->redoStrokes[i].points);
+    free(canvas->redoStrokes[i].cachedPoints);
+  }
   canvas->redoCount = 0;
 }
 
@@ -53,8 +55,10 @@ void Redo(Canvas *canvas) {
 }
 
 void ClearCanvas(Canvas *canvas) {
-  for (int i = 0; i < canvas->strokeCount; i++)
+  for (int i = 0; i < canvas->strokeCount; i++) {
     free(canvas->strokes[i].points);
+    free(canvas->strokes[i].cachedPoints);
+  }
   canvas->strokeCount = 0;
   canvas->totalPoints = 0;
   ClearRedo(canvas);
@@ -63,10 +67,17 @@ void ClearCanvas(Canvas *canvas) {
   canvas->isDraggingSelection = false;
 
   free(canvas->currentStroke.points);
+  free(canvas->currentStroke.cachedPoints);
   canvas->currentStroke.points = NULL;
   canvas->currentStroke.pointCount = 0;
   canvas->currentStroke.capacity = 0;
   canvas->currentStroke.usePressure = false;
+  canvas->currentStroke.cachedPoints = NULL;
+  canvas->currentStroke.cachedCount = 0;
+  canvas->currentStroke.cachedCapacity = 0;
+  canvas->currentStroke.cacheVersion = 0;
+  canvas->currentStroke.lastBuiltVersion = 0;
+  canvas->currentStroke.cacheDirty = false;
   canvas->isDrawing = false;
 
   fprintf(stderr, "Canvas Cleared.\n");
