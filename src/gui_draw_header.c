@@ -19,16 +19,22 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   Vector2 mouse = GetMousePosition();
   for (int i = 0; i < gui->documentCount; i++) {
     Rectangle tab = {tabX + i * (tabW + tabGap), tabY, tabW, tabH};
-    DrawRectangleRounded(tab, 0.20f, 6, t.tab);
-    DrawRectangleRoundedLinesEx(tab, 0.20f, 6, 1.0f, t.border);
+    bool isActive = (i == gui->activeDocument);
+    Color tabFill = isActive ? ColorAlpha(t.surface, 0.98f) : t.tab;
+    Color tabBorder = isActive ? t.primary : t.border;
+    Color tabText = isActive ? t.text : t.textDim;
+    Color tabIcon = isActive ? t.primary : t.textDim;
+
+    DrawRectangleRounded(tab, 0.20f, 6, tabFill);
+    DrawRectangleRoundedLinesEx(tab, 0.20f, 6, 1.0f, tabBorder);
     GuiDrawIconTexture(&gui->icons, gui->icons.pen,
-                       (Rectangle){tab.x + 8, tab.y + 6, 18, 18}, t.primary);
+                       (Rectangle){tab.x + 8, tab.y + 6, 18, 18}, tabIcon);
 
     Document *doc = &gui->documents[i];
     const char *label =
         doc->hasPath ? GetFileName(doc->path) : "Untitled Sketch";
     DrawTextEx(gui->uiFont, label, (Vector2){tab.x + 30, tab.y + 9}, 12, 1.0f,
-               t.text);
+               tabText);
 
     Rectangle tabClose = {tab.x + tab.width - 24, tab.y + 6, 18, 18};
     if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
