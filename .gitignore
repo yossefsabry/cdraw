@@ -2,3 +2,6 @@
 /obj/
 /assets/ui_icons/
 *.cdraw
+
+tmp
+temp
