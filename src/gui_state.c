@@ -39,6 +39,8 @@ void InitGui(GuiState *gui) {
   gui->darkMode = true;
   gui->showMenu = false;
   gui->menuRect = (Rectangle){0, 0, 200, 220};
+  gui->showExportMenu = false;
+  gui->exportMenuRect = (Rectangle){0, 0, 200, 220};
   gui->requestExit = false;
 
   gui->documents = NULL;
@@ -94,5 +96,7 @@ bool IsMouseOverGui(GuiState *gui) {
   bool overPicker =
       gui->showColorPicker && CheckCollisionPointRec(mouse, gui->colorPickerRect);
   bool overMenu = gui->showMenu && CheckCollisionPointRec(mouse, gui->menuRect);
-  return overTop || overPalette || overPicker || overMenu;
+  bool overExport = gui->showExportMenu &&
+                    CheckCollisionPointRec(mouse, gui->exportMenuRect);
+  return overTop || overPalette || overPicker || overMenu || overExport;
 }

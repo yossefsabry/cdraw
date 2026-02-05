@@ -84,6 +84,8 @@ typedef struct {
   bool showMenu;
   Rectangle menuRect;
   Rectangle menuButtonRect;
+  bool showExportMenu;
+  Rectangle exportMenuRect;
   bool requestExit;
   bool isTyping;
 

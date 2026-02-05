@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "prefs.h"
 #include "raylib.h"
+#include <stdio.h>
 
 int main(void) {
   const int screenWidth = 1000;
@@ -58,4 +59,8 @@ int main(void) {
   CloseWindow();
 
   return 0;
+}
+
+void welcome() {
+    printf("welcome");
 }

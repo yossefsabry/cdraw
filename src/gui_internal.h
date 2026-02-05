@@ -17,6 +17,17 @@ typedef struct {
   Color groupBg;
 } Theme;
 
+typedef enum {
+  EXPORT_FORMAT_PNG = 0,
+  EXPORT_FORMAT_JPG,
+  EXPORT_FORMAT_SVG
+} ExportFormat;
+
+typedef enum {
+  EXPORT_SCOPE_VIEW = 0,
+  EXPORT_SCOPE_CANVAS
+} ExportScope;
+
 Theme GuiThemeGet(bool darkMode);
 
 void GuiToastSet(GuiState *gui, const char *msg);
@@ -56,6 +67,8 @@ void GuiDrawFooter(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh);
 void GuiMarkNewDocument(GuiState *gui);
 void GuiRequestOpen(GuiState *gui);
 void GuiRequestSave(GuiState *gui, Document *doc);
+void GuiRequestExport(GuiState *gui, const Canvas *canvas, ExportFormat format,
+                      ExportScope scope);
 
 void GuiDocumentsInit(GuiState *gui, int screenWidth, int screenHeight,
                       bool showGrid);
