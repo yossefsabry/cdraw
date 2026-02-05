@@ -96,6 +96,10 @@ typedef struct {
   char toast[128];
   double toastUntil;
 
+  char tooltip[128];
+  Rectangle tooltipAnchor;
+  bool showTooltip;
+
   GuiIcons icons;
   Font uiFont;
   bool ownsUiFont;

@@ -21,6 +21,10 @@ Theme GuiThemeGet(bool darkMode);
 
 void GuiToastSet(GuiState *gui, const char *msg);
 
+void GuiTooltipReset(GuiState *gui);
+void GuiTooltipSet(GuiState *gui, const char *text, Rectangle anchor);
+void GuiDrawTooltip(GuiState *gui, Theme t);
+
 void GuiFontLoad(GuiState *gui);
 void GuiFontUnload(GuiState *gui);
 
@@ -29,9 +33,10 @@ void GuiIconsUnload(GuiIcons *icons);
 
 void GuiDrawIconTexture(const GuiIcons *icons, GuiIcon icon, Rectangle bounds,
                         Color tint);
-bool GuiIconButton(const GuiIcons *icons, Rectangle bounds, GuiIcon icon,
-                   bool active, Color bgActive, Color bgHover, Color iconActive,
-                   Color iconIdle, Color iconHover);
+bool GuiIconButton(GuiState *gui, const GuiIcons *icons, Rectangle bounds,
+                   GuiIcon icon, bool active, Color bgActive, Color bgHover,
+                   Color iconActive, Color iconIdle, Color iconHover,
+                   const char *tooltip);
 
 void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                    Color iconHover, int sw);

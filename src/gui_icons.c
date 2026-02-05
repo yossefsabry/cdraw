@@ -149,11 +149,15 @@ void GuiDrawIconTexture(const GuiIcons *icons, GuiIcon icon, Rectangle bounds,
   DrawTexturePro(icons->atlas, icon.src, dst, (Vector2){0, 0}, 0.0f, tint);
 }
 
-bool GuiIconButton(const GuiIcons *icons, Rectangle bounds, GuiIcon icon,
-                   bool active, Color bgActive, Color bgHover, Color iconActive,
-                   Color iconIdle, Color iconHover) {
+bool GuiIconButton(GuiState *gui, const GuiIcons *icons, Rectangle bounds,
+                   GuiIcon icon, bool active, Color bgActive, Color bgHover,
+                   Color iconActive, Color iconIdle, Color iconHover,
+                   const char *tooltip) {
   Vector2 mouse = GetMousePosition();
   bool hover = CheckCollisionPointRec(mouse, bounds);
+
+  if (hover)
+    GuiTooltipSet(gui, tooltip, bounds);
 
   if (active)
     DrawRectangleRounded(bounds, 0.25f, 6, bgActive);

@@ -6,6 +6,7 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
 
+  GuiTooltipReset(gui);
   if (gui->showWelcome) {
     GuiDrawWelcome(gui, canvas, t, sw, sh);
     return;
@@ -33,4 +34,5 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
                  paletteW, paletteH);
   GuiDrawColorPicker(gui, t);
   GuiDrawFooter(gui, canvas, t, sw, sh);
+  GuiDrawTooltip(gui, t);
 }

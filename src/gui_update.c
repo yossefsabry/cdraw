@@ -133,9 +133,19 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
     if (ctrl && IsKeyPressed(KEY_O))
       GuiRequestOpen(gui);
     if (ctrl && IsKeyPressed(KEY_N)) {
-      ClearCanvas(canvas);
-      GuiMarkNewDocument(gui);
+      Document *active = GuiGetActiveDocument(gui);
+      bool showGrid = active ? active->canvas.showGrid : true;
+      GuiAddDocument(gui, GetScreenWidth(), GetScreenHeight(), showGrid, true);
       GuiToastSet(gui, "New canvas.");
+    }
+    if (ctrl && IsKeyPressed(KEY_W)) {
+      Document *active = GuiGetActiveDocument(gui);
+      bool showGrid = active ? active->canvas.showGrid : true;
+      if (gui->activeDocument >= 0) {
+        GuiCloseDocument(gui, gui->activeDocument, GetScreenWidth(),
+                         GetScreenHeight(), showGrid);
+        GuiToastSet(gui, "Tab closed.");
+      }
     }
 
     if (!gui->isTyping && !ctrl && !alt) {

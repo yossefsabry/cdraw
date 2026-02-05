@@ -37,8 +37,9 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                tabText);
 
     Rectangle tabClose = {tab.x + tab.width - 24, tab.y + 6, 18, 18};
-    if (GuiIconButton(&gui->icons, tabClose, gui->icons.windowClose, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover)) {
+    if (GuiIconButton(gui, &gui->icons, tabClose, gui->icons.windowClose, false,
+                      t.hover, t.hover, t.text, iconIdle, iconHover,
+                      "Close tab")) {
       bool showGrid = doc->canvas.showGrid;
       GuiCloseDocument(gui, i, GetScreenWidth(), GetScreenHeight(), showGrid);
       GuiToastSet(gui, "Closed.");
@@ -52,8 +53,8 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   }
 
   Rectangle newBtn = {tabX + gui->documentCount * (tabW + tabGap), 9, 26, 26};
-  if (GuiIconButton(&gui->icons, newBtn, gui->icons.add, false, t.hover, t.hover,
-                    t.text, iconIdle, iconHover)) {
+  if (GuiIconButton(gui, &gui->icons, newBtn, gui->icons.add, false, t.hover,
+                    t.hover, t.text, iconIdle, iconHover, "New canvas")) {
     Document *active = GuiGetActiveDocument(gui);
     bool showGrid = active ? active->canvas.showGrid : true;
     GuiAddDocument(gui, GetScreenWidth(), GetScreenHeight(), showGrid, true);
@@ -62,36 +63,38 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
   const char *vText = "cdraw";
   Vector2 vSize = MeasureTextEx(gui->uiFont, vText, 12, 1.0f);
-  DrawTextEx(gui->uiFont, vText, (Vector2){(float)sw / 2.0f - vSize.x / 2.0f, 14},
-             12, 1.0f, t.textDim);
+  float titleX = (float)sw / 2.0f - vSize.x / 2.0f;
+  float titleY = 14.0f;
+  float titlePad = 6.0f;
+
+  float tabsRightEdge = tabX + gui->documentCount * (tabW + tabGap) + 26.0f;
+  bool titleBlocked = tabsRightEdge + 8.0f >= (titleX - titlePad);
+  if (!titleBlocked) {
+    DrawTextEx(gui->uiFont, vText, (Vector2){titleX, titleY}, 12, 1.0f, t.textDim);
+  }
 
   float rx = (float)sw - 120;
+  const char *themeTip =
+      gui->darkMode ? "Switch to light mode" : "Switch to dark mode";
   Rectangle darkBtn = {rx, 7, 26, 26};
-  if (CheckCollisionPointRec(mouse, darkBtn))
-    DrawRectangleRounded(darkBtn, 0.25f, 6, t.hover);
-  GuiDrawIconTexture(&gui->icons,
-                     gui->darkMode ? gui->icons.lightMode : gui->icons.darkMode,
-                     darkBtn, iconIdle);
-  if (CheckCollisionPointRec(mouse, darkBtn) &&
-      IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+  if (GuiIconButton(gui, &gui->icons, darkBtn,
+                    gui->darkMode ? gui->icons.lightMode : gui->icons.darkMode,
+                    false, t.hover, t.hover, t.text, iconIdle, iconHover,
+                    themeTip)) {
     gui->darkMode = !gui->darkMode;
     GuiToastSet(gui, gui->darkMode ? "Dark mode." : "Light mode.");
   }
 
   Rectangle minBtn = {rx + 30, 7, 26, 26};
-  if (CheckCollisionPointRec(mouse, minBtn))
-    DrawRectangleRounded(minBtn, 0.25f, 6, t.hover);
-  GuiDrawIconTexture(&gui->icons, gui->icons.windowMinimize, minBtn, iconIdle);
-  if (CheckCollisionPointRec(mouse, minBtn) &&
-      IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+  if (GuiIconButton(gui, &gui->icons, minBtn, gui->icons.windowMinimize, false,
+                    t.hover, t.hover, t.text, iconIdle, iconHover, "Minimize"))
     MinimizeWindow();
 
+  const char *maxTip =
+      IsWindowMaximized() ? "Restore window" : "Maximize window";
   Rectangle maxBtn = {rx + 60, 7, 26, 26};
-  if (CheckCollisionPointRec(mouse, maxBtn))
-    DrawRectangleRounded(maxBtn, 0.25f, 6, t.hover);
-  GuiDrawIconTexture(&gui->icons, gui->icons.windowToggleSize, maxBtn, iconIdle);
-  if (CheckCollisionPointRec(mouse, maxBtn) &&
-      IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+  if (GuiIconButton(gui, &gui->icons, maxBtn, gui->icons.windowToggleSize, false,
+                    t.hover, t.hover, t.text, iconIdle, iconHover, maxTip)) {
     if (IsWindowMaximized())
       RestoreWindow();
     else
@@ -99,7 +102,7 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   }
 
   Rectangle closeBtn = {rx + 90, 7, 26, 26};
-  if (GuiIconButton(&gui->icons, closeBtn, gui->icons.windowClose, false, t.hover,
-                    t.hover, t.text, iconIdle, iconHover))
+  if (GuiIconButton(gui, &gui->icons, closeBtn, gui->icons.windowClose, false,
+                    t.hover, t.hover, t.text, iconIdle, iconHover, "Close app"))
     gui->requestExit = true;
 }

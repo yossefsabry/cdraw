@@ -24,8 +24,9 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     float btnY = ty + (48 - btnS) / 2;
 
     gui->menuButtonRect = (Rectangle){tx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, gui->menuButtonRect, gui->icons.menu, false,
-                      t.hover, t.hover, t.text, iconIdle, iconHover)) {
+    if (GuiIconButton(gui, &gui->icons, gui->menuButtonRect, gui->icons.menu,
+                      false, t.hover, t.hover, t.text, iconIdle, iconHover,
+                      "Menu")) {
         gui->showMenu = !gui->showMenu;
         gui->menuRect.x = gui->menuButtonRect.x;
         gui->menuRect.y = gui->menuButtonRect.y + gui->menuButtonRect.height + 6;
@@ -35,15 +36,15 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     tx += 10;
 
     Rectangle openBtn = {tx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, openBtn, gui->icons.openFile, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover)) {
+    if (GuiIconButton(gui, &gui->icons, openBtn, gui->icons.openFile, false,
+                      t.hover, t.hover, t.text, iconIdle, iconHover, "Open")) {
         GuiRequestOpen(gui);
     }
     tx += btnS;
 
     Rectangle saveBtn = {tx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, saveBtn, gui->icons.saveFile, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover)) {
+    if (GuiIconButton(gui, &gui->icons, saveBtn, gui->icons.saveFile, false,
+                      t.hover, t.hover, t.text, iconIdle, iconHover, "Save")) {
         GuiRequestSave(gui, GuiGetActiveDocument(gui));
     }
     tx += btnS + 10;
@@ -51,14 +52,14 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     tx += 10;
 
     Rectangle undoBtn = {tx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, undoBtn, gui->icons.undo, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover))
+    if (GuiIconButton(gui, &gui->icons, undoBtn, gui->icons.undo, false, t.hover,
+                      t.hover, t.text, iconIdle, iconHover, "Undo"))
         Undo(canvas);
     tx += btnS;
 
     Rectangle redoBtn = {tx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, redoBtn, gui->icons.redo, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover))
+    if (GuiIconButton(gui, &gui->icons, redoBtn, gui->icons.redo, false, t.hover,
+                      t.hover, t.text, iconIdle, iconHover, "Redo"))
         Redo(canvas);
     tx += btnS + 10;
     Divider(tx, ty + 10, 28, t.border);
@@ -71,21 +72,22 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     float gx = tx + 4;
     Color activeBg = t.surface, hoverBg = t.hover, activeIcon = t.primary;
 
-#define TOOLBTN(icon, tool)                                                    \
+#define TOOLBTN(icon, tool, label)                                              \
     do {                                                                         \
         Rectangle b = {gx, btnY, btnS, btnS};                                      \
-        if (GuiIconButton(&gui->icons, b, icon, gui->activeTool == (tool),         \
-                          activeBg, hoverBg, activeIcon, iconIdle, iconHover))     \
+        if (GuiIconButton(gui, &gui->icons, b, icon, gui->activeTool == (tool),     \
+                          activeBg, hoverBg, activeIcon, iconIdle, iconHover,      \
+                          (label)))                                               \
             gui->activeTool = (tool);                                                \
         gx += btnS;                                                                \
     } while (0)
 
-    TOOLBTN(gui->icons.pen, TOOL_PEN);
-    TOOLBTN(gui->icons.rect, TOOL_RECT);
-    TOOLBTN(gui->icons.circle, TOOL_CIRCLE);
-    TOOLBTN(gui->icons.line, TOOL_LINE);
-    TOOLBTN(gui->icons.eraser, TOOL_ERASER);
-    TOOLBTN(gui->icons.select, TOOL_SELECT);
+    TOOLBTN(gui->icons.pen, TOOL_PEN, "Pen");
+    TOOLBTN(gui->icons.rect, TOOL_RECT, "Rectangle");
+    TOOLBTN(gui->icons.circle, TOOL_CIRCLE, "Circle");
+    TOOLBTN(gui->icons.line, TOOL_LINE, "Arrow/Line");
+    TOOLBTN(gui->icons.eraser, TOOL_ERASER, "Eraser");
+    TOOLBTN(gui->icons.select, TOOL_SELECT, "Select");
     #undef TOOLBTN
 
     tx += group.width + 10;
@@ -101,11 +103,13 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                t.textDim);
 
     gui->colorButtonRect = (Rectangle){tx, btnY, 96, btnS};
-    if (CheckCollisionPointRec(GetMousePosition(), gui->colorButtonRect) &&
-        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        gui->showColorPicker = !gui->showColorPicker;
-        gui->colorPickerRect.x = sw / 2.0f - gui->colorPickerRect.width / 2.0f;
-        gui->colorPickerRect.y = paletteY - gui->colorPickerRect.height - 10;
+    if (CheckCollisionPointRec(GetMousePosition(), gui->colorButtonRect)) {
+        GuiTooltipSet(gui, "Color picker", gui->colorButtonRect);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            gui->showColorPicker = !gui->showColorPicker;
+            gui->colorPickerRect.x = sw / 2.0f - gui->colorPickerRect.width / 2.0f;
+            gui->colorPickerRect.y = paletteY - gui->colorPickerRect.height - 10;
+        }
     }
     tx += 120;
 
@@ -130,19 +134,22 @@ void GuiDrawToolbar(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
     float rtx = (float)sw - 130;
     Rectangle resetBtn = {rtx, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, resetBtn, gui->icons.resetView, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover)) {
+    if (GuiIconButton(gui, &gui->icons, resetBtn, gui->icons.resetView, false,
+                      t.hover, t.hover, t.text, iconIdle, iconHover,
+                      "Reset view")) {
         ResetCanvasView(canvas);
         GuiToastSet(gui, "View reset.");
     }
 
     Rectangle gridBtn = {rtx + 40, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, gridBtn, gui->icons.grid, canvas->showGrid,
-                      t.hover, t.hover, t.primary, iconIdle, iconHover))
+    const char *gridTip = canvas->showGrid ? "Hide grid" : "Show grid";
+    if (GuiIconButton(gui, &gui->icons, gridBtn, gui->icons.grid, canvas->showGrid,
+                      t.hover, t.hover, t.primary, iconIdle, iconHover, gridTip))
         canvas->showGrid = !canvas->showGrid;
 
     Rectangle fsBtn = {rtx + 80, btnY, btnS, btnS};
-    if (GuiIconButton(&gui->icons, fsBtn, gui->icons.fullscreen, false, t.hover,
-                      t.hover, t.text, iconIdle, iconHover))
+    const char *fsTip = "Toggle fullscreen";
+    if (GuiIconButton(gui, &gui->icons, fsBtn, gui->icons.fullscreen, false, t.hover,
+                      t.hover, t.text, iconIdle, iconHover, fsTip))
         ToggleFullscreen();
 }
