@@ -417,19 +417,34 @@ static bool ExportCanvasRaster(const Canvas *canvas, ExportScope scope,
   if (sw <= 0 || sh <= 0)
     return false;
 
+  int targetW = sw;
+  int targetH = sh;
   Camera2D cam = canvas->camera;
+  if (scope == EXPORT_SCOPE_VIEW_FHD) {
+    targetW = 1920;
+    targetH = 1080;
+    float scaleX = (float)targetW / (float)sw;
+    float scaleY = (float)targetH / (float)sh;
+    float scale = fminf(scaleX, scaleY);
+    Vector2 center =
+        GetScreenToWorld2D((Vector2){(float)sw * 0.5f, (float)sh * 0.5f},
+                           canvas->camera);
+    cam.target = center;
+    cam.offset = (Vector2){(float)targetW * 0.5f, (float)targetH * 0.5f};
+    cam.zoom = canvas->camera.zoom * scale;
+  }
   if (scope == EXPORT_SCOPE_CANVAS) {
     Rectangle bounds;
     if (CanvasStrokeBounds(canvas, &bounds)) {
       float pad = 24.0f;
       float bw = fmaxf(bounds.width + pad * 2.0f, 1.0f);
       float bh = fmaxf(bounds.height + pad * 2.0f, 1.0f);
-      float zoomX = (float)sw / bw;
-      float zoomY = (float)sh / bh;
+      float zoomX = (float)targetW / bw;
+      float zoomY = (float)targetH / bh;
       float zoom = fminf(zoomX, zoomY);
       cam.target = (Vector2){bounds.x + bounds.width * 0.5f,
                              bounds.y + bounds.height * 0.5f};
-      cam.offset = (Vector2){(float)sw / 2.0f, (float)sh / 2.0f};
+      cam.offset = (Vector2){(float)targetW / 2.0f, (float)targetH / 2.0f};
       cam.zoom = (zoom > 0.0f) ? zoom : 1.0f;
       cam.rotation = 0.0f;
     }
@@ -440,7 +455,7 @@ static bool ExportCanvasRaster(const Canvas *canvas, ExportScope scope,
   temp.selectedStrokeIndex = -1;
   temp.isDrawing = false;
 
-  RenderTexture2D target = LoadRenderTexture(sw, sh);
+  RenderTexture2D target = LoadRenderTexture(targetW, targetH);
   if (target.texture.id == 0)
     return false;
 
@@ -462,6 +477,9 @@ static bool ExportCanvasSvg(const Canvas *canvas, ExportScope scope,
                             const char *path) {
   if (!canvas || !path)
     return false;
+
+  if (scope == EXPORT_SCOPE_VIEW_FHD)
+    scope = EXPORT_SCOPE_VIEW;
 
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();

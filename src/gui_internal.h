@@ -25,7 +25,8 @@ typedef enum {
 
 typedef enum {
   EXPORT_SCOPE_VIEW = 0,
-  EXPORT_SCOPE_CANVAS
+  EXPORT_SCOPE_CANVAS,
+  EXPORT_SCOPE_VIEW_FHD
 } ExportScope;
 
 Theme GuiThemeGet(bool darkMode);
