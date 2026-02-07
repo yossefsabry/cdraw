@@ -12,15 +12,14 @@ static bool MenuItem(GuiState *gui, Rectangle r, const char *label,
   if (bg.a > 0)
     DrawRectangleRec(r, bg);
 
-  Color labelColor = destructive ? (Color){239, 68, 68, 255}
-                                 : (hover ? t.text : t.textDim);
-  DrawTextEx(gui->uiFont, label, (Vector2){r.x + 12, r.y + 7}, 12, 1.0f,
+  Color labelColor = destructive ? (Color){239, 68, 68, 255} : t.text;
+  DrawTextEx(gui->uiFont, label, (Vector2){r.x + 12, r.y + 8}, 13, 1.0f,
              labelColor);
 
   if (shortcut && shortcut[0] != '\0') {
-    Vector2 size = MeasureTextEx(gui->uiFont, shortcut, 11, 1.0f);
+    Vector2 size = MeasureTextEx(gui->uiFont, shortcut, 12, 1.0f);
     DrawTextEx(gui->uiFont, shortcut,
-               (Vector2){r.x + r.width - size.x - 12, r.y + 7}, 11, 1.0f,
+               (Vector2){r.x + r.width - size.x - 12, r.y + 8}, 12, 1.0f,
                t.textDim);
   }
   return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
@@ -36,14 +35,14 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
     return;
   }
 
-  const float pad = 8.0f;
-  const float titleH = 28.0f;
-  const float itemH = 28.0f;
-  const float dividerH = 10.0f;
+  const float pad = 10.0f;
+  const float titleH = 30.0f;
+  const float itemH = 30.0f;
+  const float dividerH = 12.0f;
 
   const int itemCount = 8;
   const int dividerCount = 3;
-  float w = 230.0f;
+  float w = 250.0f;
   float h = titleH + pad + itemCount * itemH + dividerCount * dividerH + pad;
 
   gui->menuRect.width = w;
@@ -55,7 +54,7 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
   float x = gui->menuRect.x;
   float y = gui->menuRect.y;
 
-  DrawTextEx(gui->uiFont, "Menu", (Vector2){x + pad + 2, y + 7}, 12, 1.0f,
+  DrawTextEx(gui->uiFont, "Menu", (Vector2){x + pad + 2, y + 8}, 13, 1.0f,
              t.text);
   MenuDivider(x, y + titleH, w, t);
 
@@ -103,7 +102,7 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
   const int exportItemCount = 3;
-  float exportW = 220.0f;
+  float exportW = 240.0f;
   float exportH = titleH + pad + exportItemCount * itemH + pad;
   float exportX = x + w + 8.0f;
   float exportY = exportRow.y - pad - titleH;
@@ -130,7 +129,7 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
 
     float ex = gui->exportMenuRect.x;
     float ey = gui->exportMenuRect.y;
-    DrawTextEx(gui->uiFont, "Export", (Vector2){ex + pad + 2, ey + 7}, 12, 1.0f,
+    DrawTextEx(gui->uiFont, "Export", (Vector2){ex + pad + 2, ey + 8}, 13, 1.0f,
                t.text);
     MenuDivider(ex, ey + titleH, exportW, t);
 
