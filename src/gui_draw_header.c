@@ -74,6 +74,40 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   }
 
   float rx = (float)sw - 120;
+  float helpSize = 32.0f;
+  float helpX = rx - helpSize - 10.0f;
+  Rectangle helpBtn = {helpX, 4, helpSize, helpSize};
+  gui->helpButtonRect = helpBtn;
+  bool helpHover = CheckCollisionPointRec(mouse, helpBtn);
+  if (helpHover)
+    GuiTooltipSet(gui, "Help", helpBtn);
+
+  Color helpBg = gui->showHelp
+                     ? t.primary
+                     : (helpHover ? ColorAlpha(t.primary, 0.18f)
+                                  : ColorAlpha(t.surface, 0.85f));
+  DrawRectangleRounded(helpBtn, 0.25f, 6, helpBg);
+  Color helpBorder = gui->showHelp ? t.primary : t.border;
+  DrawRectangleRoundedLinesEx(helpBtn, 0.25f, 6, 1.25f, helpBorder);
+
+  const char *helpText = "?";
+  float helpFontSize = 20.0f;
+  Vector2 helpTextSize =
+      MeasureTextEx(gui->uiFont, helpText, helpFontSize, 1.0f);
+  DrawTextEx(gui->uiFont, helpText,
+             (Vector2){helpBtn.x + (helpBtn.width - helpTextSize.x) / 2.0f,
+                       helpBtn.y + (helpBtn.height - helpTextSize.y) / 2.0f - 1.0f},
+             helpFontSize, 1.0f,
+             gui->showHelp ? BLACK : (helpHover ? t.text : t.text));
+  if (helpHover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    gui->showHelp = !gui->showHelp;
+    if (gui->showHelp) {
+      gui->showMenu = false;
+      gui->showExportMenu = false;
+      gui->showColorPicker = false;
+    }
+  }
+
   const char *themeTip =
       gui->darkMode ? "Switch to light mode" : "Switch to dark mode";
   Rectangle darkBtn = {rx, 7, 26, 26};

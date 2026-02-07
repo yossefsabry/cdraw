@@ -102,7 +102,7 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
 
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
-  const int exportItemCount = 8;
+  const int exportItemCount = 3;
   float exportW = 220.0f;
   float exportH = titleH + pad + exportItemCount * itemH + pad;
   float exportX = x + w + 8.0f;
@@ -136,29 +136,8 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
 
     ey += titleH + pad;
     if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "PNG (view)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_PNG, EXPORT_SCOPE_VIEW);
-      gui->showMenu = false;
-      gui->showExportMenu = false;
-    }
-    ey += itemH;
-    if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
                  "PNG (FHD)", NULL, t, false, NULL)) {
       GuiRequestExport(gui, canvas, EXPORT_FORMAT_PNG, EXPORT_SCOPE_VIEW_FHD);
-      gui->showMenu = false;
-      gui->showExportMenu = false;
-    }
-    ey += itemH;
-    if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "PNG (full)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_PNG, EXPORT_SCOPE_CANVAS);
-      gui->showMenu = false;
-      gui->showExportMenu = false;
-    }
-    ey += itemH;
-    if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "JPG (view)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_JPG, EXPORT_SCOPE_VIEW);
       gui->showMenu = false;
       gui->showExportMenu = false;
     }
@@ -171,22 +150,8 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
     }
     ey += itemH;
     if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "JPG (full)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_JPG, EXPORT_SCOPE_CANVAS);
-      gui->showMenu = false;
-      gui->showExportMenu = false;
-    }
-    ey += itemH;
-    if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "SVG (view)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_SVG, EXPORT_SCOPE_VIEW);
-      gui->showMenu = false;
-      gui->showExportMenu = false;
-    }
-    ey += itemH;
-    if (MenuItem(gui, (Rectangle){ex + pad, ey, exportW - pad * 2, itemH},
-                 "SVG (full)", NULL, t, false, NULL)) {
-      GuiRequestExport(gui, canvas, EXPORT_FORMAT_SVG, EXPORT_SCOPE_CANVAS);
+                 "SVG (FHD)", NULL, t, false, NULL)) {
+      GuiRequestExport(gui, canvas, EXPORT_FORMAT_SVG, EXPORT_SCOPE_VIEW_FHD);
       gui->showMenu = false;
       gui->showExportMenu = false;
     }

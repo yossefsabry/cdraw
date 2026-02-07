@@ -63,6 +63,8 @@ void GuiDrawPalette(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                     Color iconHover, int sw, int sh, float paletteX,
                     float paletteY, float paletteW, float paletteH);
 void GuiDrawColorPicker(GuiState *gui, Theme t);
+void GuiDrawHelpPanel(GuiState *gui, const Canvas *canvas, Theme t, int sw,
+                      int sh);
 void GuiDrawFooter(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh);
 
 void GuiMarkNewDocument(GuiState *gui);

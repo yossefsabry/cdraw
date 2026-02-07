@@ -33,6 +33,7 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
   GuiDrawPalette(gui, canvas, t, iconIdle, iconHover, sw, sh, paletteX, paletteY,
                  paletteW, paletteH);
   GuiDrawColorPicker(gui, t);
+  GuiDrawHelpPanel(gui, canvas, t, sw, sh);
   GuiDrawFooter(gui, canvas, t, sw, sh);
   GuiDrawTooltip(gui, t);
 }

@@ -41,6 +41,9 @@ void InitGui(GuiState *gui) {
   gui->menuRect = (Rectangle){0, 0, 200, 220};
   gui->showExportMenu = false;
   gui->exportMenuRect = (Rectangle){0, 0, 200, 220};
+  gui->showHelp = false;
+  gui->helpRect = (Rectangle){0, 0, 0, 0};
+  gui->helpButtonRect = (Rectangle){0, 0, 0, 0};
   gui->requestExit = false;
 
   gui->documents = NULL;
@@ -98,5 +101,6 @@ bool IsMouseOverGui(GuiState *gui) {
   bool overMenu = gui->showMenu && CheckCollisionPointRec(mouse, gui->menuRect);
   bool overExport = gui->showExportMenu &&
                     CheckCollisionPointRec(mouse, gui->exportMenuRect);
-  return overTop || overPalette || overPicker || overMenu || overExport;
+  bool overHelp = gui->showHelp && CheckCollisionPointRec(mouse, gui->helpRect);
+  return overTop || overPalette || overPicker || overMenu || overExport || overHelp;
 }

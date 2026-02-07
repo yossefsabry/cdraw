@@ -478,16 +478,36 @@ static bool ExportCanvasSvg(const Canvas *canvas, ExportScope scope,
   if (!canvas || !path)
     return false;
 
-  if (scope == EXPORT_SCOPE_VIEW_FHD)
-    scope = EXPORT_SCOPE_VIEW;
-
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
   Rectangle view = {0, 0, (float)sw, (float)sh};
   float zoom = canvas->camera.zoom;
+  float outW = view.width;
+  float outH = view.height;
 
-  if (scope == EXPORT_SCOPE_VIEW) {
+  if (scope == EXPORT_SCOPE_VIEW_FHD) {
+    const int targetW = 1920;
+    const int targetH = 1080;
+    float scaleX = (float)targetW / (float)sw;
+    float scaleY = (float)targetH / (float)sh;
+    float scale = fminf(scaleX, scaleY);
+    Vector2 center =
+        GetScreenToWorld2D((Vector2){(float)sw * 0.5f, (float)sh * 0.5f},
+                           canvas->camera);
+    Camera2D cam = canvas->camera;
+    cam.target = center;
+    cam.offset = (Vector2){(float)targetW * 0.5f, (float)targetH * 0.5f};
+    cam.zoom = canvas->camera.zoom * scale;
+    cam.rotation = 0.0f;
+
+    view = GetCameraViewRect(&cam, targetW, targetH);
+    zoom = cam.zoom;
+    outW = (float)targetW;
+    outH = (float)targetH;
+  } else if (scope == EXPORT_SCOPE_VIEW) {
     view = GetCameraViewRect(&canvas->camera, sw, sh);
+    outW = view.width;
+    outH = view.height;
   } else {
     Rectangle bounds;
     if (CanvasStrokeBounds(canvas, &bounds)) {
@@ -497,8 +517,12 @@ static bool ExportCanvasSvg(const Canvas *canvas, ExportScope scope,
       view.width = bounds.width + pad * 2.0f;
       view.height = bounds.height + pad * 2.0f;
       zoom = 1.0f;
+      outW = view.width;
+      outH = view.height;
     } else {
       view = GetCameraViewRect(&canvas->camera, sw, sh);
+      outW = view.width;
+      outH = view.height;
     }
   }
 
@@ -515,7 +539,7 @@ static bool ExportCanvasSvg(const Canvas *canvas, ExportScope scope,
   fprintf(f,
           "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%.2f\" "
           "height=\"%.2f\" viewBox=\"%.2f %.2f %.2f %.2f\">\n",
-          view.width, view.height, view.x, view.y, view.width, view.height);
+          outW, outH, view.x, view.y, view.width, view.height);
 
   char bgHex[16];
   ColorToHex(canvas->backgroundColor, bgHex, sizeof(bgHex));

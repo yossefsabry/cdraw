@@ -176,6 +176,8 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
     if (IsKeyPressed(KEY_ESCAPE)) {
       gui->showMenu = false;
       gui->showColorPicker = false;
+      gui->showExportMenu = false;
+      gui->showHelp = false;
     }
   }
 
