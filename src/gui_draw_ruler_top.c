@@ -121,7 +121,9 @@ void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw,
 
     float len = isMajor ? (r.height * 0.80f)
                         : (isMid ? (r.height * 0.55f) : (r.height * 0.35f));
-    Color c = isMajor ? t.textDim : ColorAlpha(t.textDim, 0.65f);
+    Color c = isMajor ? ColorAlpha(t.textDim, 0.90f)
+                      : (isMid ? ColorAlpha(t.textDim, 0.65f)
+                               : ColorAlpha(t.textDim, 0.45f));
 
     float yb = r.y + r.height;
     DrawLineEx((Vector2){sx, yb}, (Vector2){sx, yb - len}, 1, c);
@@ -130,7 +132,7 @@ void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw,
       char label[32];
       FormatLabel(label, sizeof(label), v, majorStep);
 
-      int fontSize = 10;
+      int fontSize = 12;
       float tw = MeasureTextEx(gui->uiFont, label, (float)fontSize, 1.0f).x;
       float tx = sx - tw / 2.0f;
       float pad = 2.0f;
@@ -139,7 +141,7 @@ void GuiDrawRulerTop(GuiState *gui, const Canvas *canvas, Theme t, int sw,
       if (tx + tw > r.x + r.width - pad)
         continue;
       DrawTextEx(gui->uiFont, label, (Vector2){tx, r.y + 3.0f}, (float)fontSize,
-                 1.0f, t.textDim);
+                 1.0f, ColorAlpha(t.text, 0.95f));
     }
   }
 

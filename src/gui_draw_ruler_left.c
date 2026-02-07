@@ -106,7 +106,7 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
 
   float xr = r.x + r.width;
   Font font = gui->uiFont;
-  float fontSize = 10.0f;
+  float fontSize = 12.0f;
 
   for (int idx = startIndex; idx <= endIndex; idx++) {
     float v = (float)idx * minorStep;
@@ -122,7 +122,9 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
 
     float len = isMajor ? (r.width * 0.80f)
                         : (isMid ? (r.width * 0.55f) : (r.width * 0.35f));
-    Color c = isMajor ? t.textDim : ColorAlpha(t.textDim, 0.65f);
+    Color c = isMajor ? ColorAlpha(t.textDim, 0.90f)
+                      : (isMid ? ColorAlpha(t.textDim, 0.65f)
+                               : ColorAlpha(t.textDim, 0.45f));
 
     DrawLineEx((Vector2){xr, sy}, (Vector2){xr - len, sy}, 1, c);
 
@@ -132,7 +134,8 @@ void GuiDrawRulerLeft(GuiState *gui, const Canvas *canvas, Theme t, int sw,
       Vector2 size = MeasureTextEx(font, label, fontSize, 1.0f);
       Vector2 pos = {r.x + r.width * 0.5f, sy};
       Vector2 origin = {size.x * 0.5f, size.y * 0.5f};
-      DrawTextPro(font, label, pos, origin, -90.0f, fontSize, 1.0f, t.textDim);
+      DrawTextPro(font, label, pos, origin, -90.0f, fontSize, 1.0f,
+                  ColorAlpha(t.text, 0.95f));
     }
   }
 
