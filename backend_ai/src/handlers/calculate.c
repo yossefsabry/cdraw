@@ -192,14 +192,16 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
     return;
   }
 
-  const char *api_key = getenv("GEMINI_API_KEY");
+  char *api_key = JsonExtractStringAlloc(req->body, "api_key");
   if (!api_key || api_key[0] == '\0') {
-    RespondError(res, 401, "Missing GEMINI_API_KEY");
+    free(api_key);
+    RespondError(res, 401, "Missing apiKey");
     return;
   }
 
   char *image = JsonExtractStringAlloc(req->body, "image");
   if (!image) {
+    free(api_key);
     RespondError(res, 400, "missing image");
     return;
   }
@@ -208,6 +210,7 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
   if (!prompt) {
     free(image);
     free(dict_raw);
+    free(api_key);
     RespondError(res, 500, "prompt failed");
     return;
   }
@@ -216,6 +219,7 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
     free(image);
     free(dict_raw);
     free(prompt);
+    free(api_key);
     RespondError(res, 500, "prompt escape failed");
     return;
   }
@@ -228,6 +232,7 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
     free(dict_raw);
     free(prompt);
     free(prompt_esc);
+    free(api_key);
     RespondError(res, 500, "alloc failed");
     return;
   }
@@ -261,6 +266,7 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
   if (!ok) {
     RespondError(res, 502, err[0] ? err : "upstream failed");
     free(resp);
+    free(api_key);
     return;
   }
 
@@ -268,6 +274,7 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
   if (!JsonFindString(resp, "text", text, sizeof(text))) {
     free(resp);
     RespondError(res, 502, "parse failed");
+    free(api_key);
     return;
   }
 
@@ -304,4 +311,5 @@ void HandleCalculate(const HttpRequest *req, HttpResponse *res) {
   res->content_type = "application/json";
   res->body = out;
   free(resp);
+  free(api_key);
 }

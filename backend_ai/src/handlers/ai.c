@@ -161,11 +161,8 @@ static bool SendGemini(const char *model,
                        char **out_text,
                        char *err,
                        size_t err_sz) {
-  if (!api_key || api_key[0] == '\0') {
-    if (err && err_sz > 0)
-      snprintf(err, err_sz, "Missing GEMINI_API_KEY");
+  if (!api_key || api_key[0] == '\0')
     return false;
-  }
   const char *b64 = StripImagePrefix(image);
   if (!b64 || b64[0] == '\0') {
     if (err && err_sz > 0)
@@ -259,11 +256,12 @@ void HandleAiAnalyze(const HttpRequest *req, HttpResponse *res) {
     if (!ok)
       RespondError(res, 502, err[0] ? err : "upstream failed");
   } else if (strcmp(provider, "gemini") == 0) {
-    const char *key = (api_key && api_key[0] != '\0') ? api_key : getenv("GEMINI_API_KEY");
-    ok = SendGemini(model, prompt, image, key, &text, err, sizeof(err));
-    if (!ok) {
-      int status = strstr(err, "Missing GEMINI_API_KEY") ? 401 : 502;
-      RespondError(res, status, err[0] ? err : "upstream failed");
+    if (!api_key || api_key[0] == '\0') {
+      RespondError(res, 401, "Missing apiKey");
+    } else {
+      ok = SendGemini(model, prompt, image, api_key, &text, err, sizeof(err));
+      if (!ok)
+        RespondError(res, 502, err[0] ? err : "upstream failed");
     }
   } else {
     RespondError(res, 400, "unknown provider");

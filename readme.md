@@ -77,11 +77,7 @@ Build:
 make backend-ai
 ```
 
-Gemini key (used by the backend):
-
-```sh
-export GEMINI_API_KEY=your_key_here
-```
+Gemini key is stored via the AI Settings UI and forwarded to the backend.
 
 Optional override:
 

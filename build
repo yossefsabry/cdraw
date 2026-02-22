@@ -1,4 +1,8 @@
 #!/bin/bash
 
+set -e
 
-make clean; make all; ./cdraw
+make clean
+make backend-ai
+make all
+./cdraw
