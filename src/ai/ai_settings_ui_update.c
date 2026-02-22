@@ -14,13 +14,9 @@ typedef struct {
   Rectangle close;
   Rectangle reveal;
 } AiUiLayout;
-static void CopyStr(char *dst, size_t cap,
-                    const char *src) {
+static void CopyStr(char *dst, size_t cap, const char *src) {
   if (!dst || cap == 0) return;
-  if (!src) {
-    dst[0] = '\0';
-    return;
-  }
+  if (!src) { dst[0] = '\0'; return; }
   size_t len = strlen(src);
   if (len >= cap) len = cap - 1;
   memcpy(dst, src, len);
@@ -39,15 +35,13 @@ static void Backspace(char *buf) {
 }
 static void PasteText(char *buf, size_t cap) {
   const char *clip = GetClipboardText();
-  if (!clip || clip[0] == '\0')
-    return;
+  if (!clip || clip[0] == '\0') return;
   for (const char *p = clip; *p; p++) {
     unsigned char c = (unsigned char)*p;
     if (c >= 32 && c <= 126)
       AppendChar(buf, cap, (int)c);
   }
 }
-
 static void InputText(char *buf, size_t cap) {
   int c = GetCharPressed();
   while (c > 0) {
@@ -73,8 +67,7 @@ static AiUiLayout Layout(int sw, int sh) {
   float w = 420.0f;
   if (w > maxW) w = maxW;
   if (w < 260.0f) w = (float)sw - 8.0f;
-  float maxH = (float)sh - top - foot -
-               margin * 2.0f;
+  float maxH = (float)sh - top - foot - margin * 2.0f;
   float h = 320.0f;
   if (h > maxH) h = maxH;
   if (h < 200.0f) h = 200.0f;
@@ -102,7 +95,8 @@ static AiUiLayout Layout(int sw, int sh) {
   l.base = (Rectangle){fx, fy, fw, field};
   fy += field + 18.0f;
   l.save = (Rectangle){fx, fy, 80, row};
-  l.clear = (Rectangle){fx + 88, fy, 80, row};
+  l.clear = (Rectangle){fx + 88,
+                        fy, 80, row};
   l.close = (Rectangle){x + w - pad - 80,
                         fy, 80, row};
   l.reveal = (Rectangle){x + w - pad - 74,
@@ -115,30 +109,23 @@ void AiSettingsUiOpen(GuiState *gui) {
   char err[64];
   (void)AiSettingsLoad(&s, err, sizeof(err));
   gui->aiProvider = (int)s.provider;
-  CopyStr(gui->aiModel, sizeof(gui->aiModel),
-          s.model);
-  CopyStr(gui->aiKey, sizeof(gui->aiKey),
-          s.api_key);
-  CopyStr(gui->aiBase, sizeof(gui->aiBase),
-          s.base_url);
+  CopyStr(gui->aiModel, sizeof(gui->aiModel), s.model);
+  CopyStr(gui->aiKey, sizeof(gui->aiKey), s.api_key);
+  CopyStr(gui->aiBase, sizeof(gui->aiBase), s.base_url);
   if (gui->aiProvider == AI_PROVIDER_LOCAL &&
       gui->aiBase[0] == '\0') {
     CopyStr(gui->aiBase, sizeof(gui->aiBase),
             "http://localhost:11434/v1");
   }
-  gui->aiStatus[0] = '\0'; gui->showAiSettings = true;
-  gui->showAiPanel = false;
-  if (gui->aiKey[0] == '\0')
-    gui->aiInputFocus = 2;
-  else
-    gui->aiInputFocus = 1;
+  gui->aiStatus[0] = '\0';
+  gui->showAiSettings = true; gui->showAiPanel = false;
+  gui->aiInputFocus =
+      (gui->aiKey[0] == '\0') ? 2 : 1;
 }
 void AiSettingsUiClear(GuiState *gui) {
   if (!gui) return;
-  gui->aiModel[0] = '\0';
-  gui->aiKey[0] = '\0';
-  gui->aiBase[0] = '\0';
-  gui->aiProvider = 0;
+  gui->aiModel[0] = '\0'; gui->aiKey[0] = '\0';
+  gui->aiBase[0] = '\0'; gui->aiProvider = 0;
   gui->aiStatus[0] = '\0';
 }
 void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
@@ -153,6 +140,7 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
   gui->aiSettingsRect = l.panel;
   Vector2 m = GetMousePosition();
   bool click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
   if (click && !CheckCollisionPointRec(m, l.panel)) {
     gui->showAiSettings = false;
     gui->aiInputFocus = 0;
@@ -180,31 +168,26 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     char err[64];
     (void)AiSettingsClear(err, sizeof(err));
     AiSettingsUiClear(gui);
-    snprintf(gui->aiStatus, sizeof(gui->aiStatus),
-             "Cleared");
+    snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Cleared");
   }
   if (click && CheckCollisionPointRec(m, l.save)) {
     AiSettings s;
     memset(&s, 0, sizeof(s));
     s.provider = (AiProvider)gui->aiProvider;
-    CopyStr(s.model, sizeof(s.model),
-            gui->aiModel);
-    CopyStr(s.api_key, sizeof(s.api_key),
-            gui->aiKey);
-    CopyStr(s.base_url, sizeof(s.base_url),
-            gui->aiBase);
+    CopyStr(s.model, sizeof(s.model), gui->aiModel);
+    CopyStr(s.api_key, sizeof(s.api_key), gui->aiKey);
+    CopyStr(s.base_url, sizeof(s.base_url), gui->aiBase);
     char err[64];
     if (AiSettingsSave(&s, err, sizeof(err))) {
-      snprintf(gui->aiStatus, sizeof(gui->aiStatus),
-               "Saved");
+      snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Saved");
     } else {
-      snprintf(gui->aiStatus, sizeof(gui->aiStatus),
-               "Save failed");
+      snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Save failed");
     }
   }
   if (gui->aiProvider != AI_PROVIDER_LOCAL &&
       gui->aiInputFocus == 3)
     gui->aiInputFocus = 0;
+
   gui->isTyping = gui->aiInputFocus != 0;
   if (gui->aiInputFocus == 1)
     InputText(gui->aiModel, sizeof(gui->aiModel));
