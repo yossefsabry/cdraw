@@ -66,6 +66,29 @@ Optional environment variables:
 - `CDRAW_AI_MODEL=llama3`
 - `CDRAW_AI_BASE_URL=http://localhost:11434/v1`
 
+## AI Backend (C)
+
+`cdraw` starts a local background server to handle AI requests and math
+calculation. The server lives in `backend_ai/` and listens on `127.0.0.1:8900`.
+
+Build:
+
+```sh
+make backend-ai
+```
+
+Gemini key (used by the backend):
+
+```sh
+export GEMINI_API_KEY=your_key_here
+```
+
+Optional override:
+
+```sh
+export CDRAW_AI_BACKEND_URL=http://127.0.0.1:8900
+```
+
 ## Controls
 
 - `Ctrl+Z` undo

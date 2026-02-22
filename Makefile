@@ -24,13 +24,15 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) \
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 TARGET = cdraw
+BACKEND_DIR = backend_ai
+BACKEND_TARGET = $(BACKEND_DIR)/backend_ai
 
-.PHONY: all clean ui-icons
+.PHONY: all clean ui-icons backend-ai
 
 SVG_ICONS = $(wildcard $(ICON_SRC_DIR)/*.svg)
 PNG_ICONS = $(patsubst $(ICON_SRC_DIR)/%.svg,$(ICON_OUT_DIR)/%.png,$(SVG_ICONS))
 
-all: ui-icons $(TARGET)
+all: ui-icons backend-ai $(TARGET)
 
 ui-icons: $(PNG_ICONS)
 
@@ -52,4 +54,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 clean:
+	$(MAKE) -C $(BACKEND_DIR) clean
 	rm -rf $(OBJ_DIR) $(TARGET)
+backend-ai:
+	$(MAKE) -C $(BACKEND_DIR)

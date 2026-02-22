@@ -110,9 +110,15 @@ bool AiSettingsReady(const AiSettings *s,
   }
   if (s->provider == AI_PROVIDER_GEMINI) {
     if (s->api_key[0] == '\0') {
-      if (err && err_sz > 0)
-        snprintf(err, err_sz, "Missing apiKey");
-      return false;
+      const char *backend = getenv("CDRAW_AI_BACKEND_URL");
+      const char *use_backend = getenv("CDRAW_AI_USE_BACKEND");
+      bool backend_enabled = (backend && backend[0] != '\0') ||
+                             (use_backend && use_backend[0] != '\0' && strcmp(use_backend, "0") != 0);
+      if (!backend_enabled) {
+        if (err && err_sz > 0)
+          snprintf(err, err_sz, "Missing apiKey");
+        return false;
+      }
     }
   } else {
     if (s->base_url[0] == '\0') {
