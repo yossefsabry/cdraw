@@ -1,10 +1,25 @@
 #include "gui_internal.h"
+#include "ai/ai_settings.h"
 #include <stdio.h>
 #include <string.h>
 
 void GuiToastSet(GuiState *gui, const char *msg) {
   snprintf(gui->toast, sizeof(gui->toast), "%s", msg);
   gui->toastUntil = GetTime() + 2.5;
+  gui->toastNext[0] = '\0';
+}
+
+void GuiToastQueue(GuiState *gui, const char *msg) {
+  if (!gui || !msg || msg[0] == '\0')
+    return;
+  double now = GetTime();
+  if (gui->toastUntil > now && gui->toast[0] != '\0') {
+    snprintf(gui->toastNext, sizeof(gui->toastNext), "%s", msg);
+    return;
+  }
+  snprintf(gui->toast, sizeof(gui->toast), "%s", msg);
+  gui->toastUntil = now + 2.5;
+  gui->toastNext[0] = '\0';
 }
 
 void UnloadGui(GuiState *gui) {
@@ -49,6 +64,7 @@ void InitGui(GuiState *gui) {
   gui->showAiSettings = false;
   gui->aiSettingsRect = (Rectangle){0, 0, 0, 0};
   gui->aiInputFocus = 0;
+  gui->aiSelectAllField = 0;
   gui->aiKeyReveal = false;
   gui->aiProvider = 0;
   gui->aiModel[0] = '\0';
@@ -60,6 +76,9 @@ void InitGui(GuiState *gui) {
   gui->aiBusy = false;
   gui->aiText[0] = '\0';
   gui->aiError[0] = '\0';
+  gui->aiReady = false;
+  gui->aiQuickButtonRect = (Rectangle){0, 0, 0, 0};
+  gui->aiCooldownUntil = 0.0;
   gui->requestExit = false;
 
   gui->documents = NULL;
@@ -69,10 +88,16 @@ void InitGui(GuiState *gui) {
   gui->lastFileName[0] = '\0';
   gui->lastDir[0] = '\0';
   gui->toast[0] = '\0';
+  gui->toastNext[0] = '\0';
   gui->toastUntil = 0.0;
 
   GuiIconsLoad(&gui->icons);
   GuiFontLoad(gui);
+
+  AiSettings s;
+  char err[64] = {0};
+  (void)AiSettingsLoad(&s, err, sizeof(err));
+  gui->aiReady = AiSettingsReady(&s, NULL, 0);
 }
 
 bool IsMouseOverGui(GuiState *gui) {
@@ -125,7 +150,9 @@ bool IsMouseOverGui(GuiState *gui) {
                     CheckCollisionPointRec(mouse, gui->aiMenuRect);
   bool overAiSet = gui->showAiSettings &&
                    CheckCollisionPointRec(mouse, gui->aiSettingsRect);
+  bool overAiQuick = gui->aiReady &&
+                     CheckCollisionPointRec(mouse, gui->aiQuickButtonRect);
   return overTop || overPalette || overPicker || overMenu ||
          overExport || overHelp || overAi || overAiMenu ||
-         overAiSet;
+         overAiSet || overAiQuick;
 }

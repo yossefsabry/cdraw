@@ -44,6 +44,28 @@ make clean
 ./cdraw
 ```
 
+## AI (Local / Ollama)
+
+`cdraw` can use any OpenAI-compatible local model server.
+
+1. Start Ollama:
+
+```sh
+ollama serve
+```
+
+2. In the app, open `Menu -> AI -> Settings` and set:
+
+- Provider: `Local`
+- Model: any installed Ollama model (e.g. `llama3`)
+- Base URL: `http://localhost:11434/v1`
+
+Optional environment variables:
+
+- `CDRAW_AI_PROVIDER=local`
+- `CDRAW_AI_MODEL=llama3`
+- `CDRAW_AI_BASE_URL=http://localhost:11434/v1`
+
 ## Controls
 
 - `Ctrl+Z` undo

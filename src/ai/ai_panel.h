@@ -10,6 +10,7 @@ void AiPanelDraw(GuiState *gui,
                  int sw,
                  int sh);
 void AiPanelRequest(GuiState *gui,
-                    const Canvas *canvas);
+                    const Canvas *canvas,
+                    bool showPanel);
 
 #endif

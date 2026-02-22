@@ -65,10 +65,23 @@ void AiPanelInit(GuiState *gui) {
   gui->aiRect = (Rectangle){0, 0, 0, 0};
 }
 
-void AiPanelRequest(GuiState *gui, const Canvas *canvas) {
-  if (!gui || !canvas || gui->aiBusy)
+void AiPanelRequest(GuiState *gui, const Canvas *canvas,
+                    bool showPanel) {
+  if (!gui || !canvas)
     return;
-  gui->aiBusy = true;
+  if (gui->aiBusy) {
+    GuiToastQueue(gui, "AI already running");
+    return;
+  }
+  double now = GetTime();
+  if (now < gui->aiCooldownUntil) {
+    int wait = (int)ceil(gui->aiCooldownUntil - now);
+    char msg[64];
+    snprintf(msg, sizeof(msg), "AI cooldown %ds", wait);
+    GuiToastQueue(gui, msg);
+    return;
+  }
+
   AiSettings settings;
   char err[96] = {0};
   (void)AiSettingsLoad(&settings, err, sizeof(err));
@@ -78,9 +91,18 @@ void AiPanelRequest(GuiState *gui, const Canvas *canvas) {
     snprintf(gui->aiStatus, sizeof(gui->aiStatus),
              "AI settings needed");
     GuiToastSet(gui, "AI settings needed");
-    gui->aiBusy = false;
     return;
   }
+
+  gui->aiBusy = true;
+  gui->aiCooldownUntil = now + 5.0;
+  gui->aiError[0] = '\0';
+  snprintf(gui->aiText, sizeof(gui->aiText),
+           "Waiting for response...");
+  if (showPanel)
+    gui->showAiPanel = true;
+
+  GuiToastSet(gui, "AI request sent. Waiting...");
 
   char raw[2048];
   raw[0] = '\0';
@@ -91,16 +113,19 @@ void AiPanelRequest(GuiState *gui, const Canvas *canvas) {
     snprintf(msg, sizeof(msg), "AI error: %s", err);
     WrapText(msg, gui->aiText,
              sizeof(gui->aiText), 60);
-    GuiToastSet(gui, "AI failed");
-    gui->showAiPanel = true;
+    snprintf(gui->aiError, sizeof(gui->aiError), "%s", err);
+    GuiToastQueue(gui, "AI failed");
+    if (showPanel)
+      gui->showAiPanel = true;
     gui->aiBusy = false;
     return;
   }
 
   WrapText(raw, gui->aiText,
            sizeof(gui->aiText), 60);
-  GuiToastSet(gui, "AI analysis ready");
-  gui->showAiPanel = true;
+  GuiToastQueue(gui, "AI analysis ready");
+  if (showPanel)
+    gui->showAiPanel = true;
   gui->aiBusy = false;
 }
 
@@ -137,6 +162,10 @@ void AiPanelDraw(GuiState *gui, const Canvas *canvas,
   float y = panel.y + 16.0f;
   DrawTextEx(gui->uiFont, "AI Analysis",
              (Vector2){x, y}, 18, 1.0f, t.text);
+  if (gui->aiBusy) {
+    DrawTextEx(gui->uiFont, "Waiting for response...",
+               (Vector2){x, y + 18.0f}, 12, 1.0f, t.textDim);
+  }
 
   Rectangle closeBtn = {panel.x + panel.width - 70,
                         panel.y + 12, 52, 24};
@@ -147,7 +176,7 @@ void AiPanelDraw(GuiState *gui, const Canvas *canvas,
                       panel.y + 12, 60, 24};
   if (PanelButton(gui, runBtn,
                   gui->aiBusy ? "..." : "Run", t))
-    AiPanelRequest(gui, canvas);
+    AiPanelRequest(gui, canvas, true);
 
   y += 32.0f;
   DrawLineEx((Vector2){panel.x + 12.0f, y},

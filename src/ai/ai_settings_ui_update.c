@@ -22,11 +22,16 @@ static void CopyStr(char *dst, size_t cap, const char *src) {
   memcpy(dst, src, len);
   dst[len] = '\0';
 }
+static const char kGeminiModel[] = "gemini-1.5-flash-latest";
 static void AppendChar(char *buf, size_t cap, int c) {
   size_t len = strlen(buf);
   if (len + 1 >= cap) return;
   buf[len] = (char)c;
   buf[len + 1] = '\0';
+}
+static void ClearText(char *buf) {
+  if (!buf) return;
+  buf[0] = '\0';
 }
 static void Backspace(char *buf) {
   size_t len = strlen(buf);
@@ -42,23 +47,61 @@ static void PasteText(char *buf, size_t cap) {
       AppendChar(buf, cap, (int)c);
   }
 }
-static void InputText(char *buf, size_t cap) {
-  int c = GetCharPressed();
-  while (c > 0) {
-    if (c >= 32 && c <= 126)
-      AppendChar(buf, cap, c);
-    c = GetCharPressed();
-  }
+static bool InputText(char *buf, size_t cap, bool selectAll) {
   bool ctrl = IsKeyDown(KEY_LEFT_CONTROL) ||
               IsKeyDown(KEY_RIGHT_CONTROL);
   bool sup = IsKeyDown(KEY_LEFT_SUPER) ||
              IsKeyDown(KEY_RIGHT_SUPER);
-  if ((ctrl || sup) && IsKeyPressed(KEY_V))
+  bool mod = ctrl || sup;
+
+  if (mod && IsKeyPressed(KEY_A))
+    return buf[0] != '\0';
+
+  if (mod && IsKeyPressed(KEY_BACKSPACE)) {
+    ClearText(buf);
+    return false;
+  }
+
+  if (IsKeyPressed(KEY_DELETE)) {
+    if (selectAll) {
+      ClearText(buf);
+      selectAll = false;
+    } else {
+      Backspace(buf);
+    }
+  }
+
+  if (IsKeyPressed(KEY_BACKSPACE)) {
+    if (selectAll) {
+      ClearText(buf);
+      selectAll = false;
+    } else {
+      Backspace(buf);
+    }
+  }
+
+  if (mod && IsKeyPressed(KEY_V)) {
+    if (selectAll) {
+      ClearText(buf);
+      selectAll = false;
+    }
     PasteText(buf, cap);
-  if (IsKeyPressed(KEY_BACKSPACE))
-    Backspace(buf);
+  }
+
+  int c = GetCharPressed();
+  while (c > 0) {
+    if (c >= 32 && c <= 126) {
+      if (selectAll) {
+        ClearText(buf);
+        selectAll = false;
+      }
+      AppendChar(buf, cap, c);
+    }
+    c = GetCharPressed();
+  }
+  return selectAll;
 }
-static AiUiLayout Layout(int sw, int sh) {
+static AiUiLayout Layout(int sw, int sh, int provider) {
   AiUiLayout l;
   const float top = 88.0f;
   const float foot = 24.0f;
@@ -67,40 +110,53 @@ static AiUiLayout Layout(int sw, int sh) {
   float w = 420.0f;
   if (w > maxW) w = maxW;
   if (w < 260.0f) w = (float)sw - 8.0f;
-  float maxH = (float)sh - top - foot - margin * 2.0f;
-  float h = 320.0f;
-  if (h > maxH) h = maxH;
-  if (h < 200.0f) h = 200.0f;
   float x = (float)sw - w - margin;
   if (x < 4.0f) x = 4.0f;
   float y = top + margin;
-  l.panel = (Rectangle){x, y, w, h};
-  float pad = 16.0f;
-  float row = 30.0f;
-  float field = 32.0f;
+  float pad = 18.0f;
+  float row = 32.0f;
+  float field = 36.0f;
   float fx = x + pad;
-  float fy = y + 44.0f;
+  float fy = y + 58.0f;
   float fw = w - pad * 2.0f;
-  float gap = 8.0f;
+  float gap = 10.0f;
   float half = (fw - gap) * 0.5f;
 
   l.provGem = (Rectangle){fx, fy, half, row};
   l.provLocal = (Rectangle){fx + half + gap,
                             fy, half, row};
-  fy += row + 16.0f;
-  l.model = (Rectangle){fx, fy, fw, field};
-  fy += field + 14.0f;
+  fy += row + 22.0f;
+  bool showModel = provider == AI_PROVIDER_LOCAL;
+  bool showBase = provider == AI_PROVIDER_LOCAL;
+  l.model = (Rectangle){0, 0, 0, 0};
+  l.base = (Rectangle){0, 0, 0, 0};
+  if (showModel) {
+    l.model = (Rectangle){fx, fy, fw, field};
+    fy += field + 22.0f;
+  }
   l.key = (Rectangle){fx, fy, fw, field};
-  fy += field + 14.0f;
-  l.base = (Rectangle){fx, fy, fw, field};
-  fy += field + 18.0f;
-  l.save = (Rectangle){fx, fy, 80, row};
-  l.clear = (Rectangle){fx + 88,
-                        fy, 80, row};
-  l.close = (Rectangle){x + w - pad - 80,
-                        fy, 80, row};
-  l.reveal = (Rectangle){x + w - pad - 74,
-                         y + 8, 74, 26};
+  fy += field;
+  if (showBase) {
+    fy += 22.0f;
+    l.base = (Rectangle){fx, fy, fw, field};
+    fy += field + 18.0f;
+  } else {
+    fy += 18.0f;
+  }
+  float btnW = (fw - gap * 2.0f) / 3.0f;
+  l.save = (Rectangle){fx, fy, btnW, row};
+  l.clear = (Rectangle){fx + btnW + gap,
+                        fy, btnW, row};
+  l.close = (Rectangle){fx + (btnW + gap) * 2.0f,
+                        fy, btnW, row};
+  l.reveal = (Rectangle){x + w - pad - 64,
+                         y + 10, 64, 24};
+  float maxH = (float)sh - top - foot - margin * 2.0f;
+  float contentH = (fy - y) + row + 58.0f;
+  float h = contentH;
+  if (h > maxH) h = maxH;
+  if (h < 200.0f) h = 200.0f;
+  l.panel = (Rectangle){x, y, w, h};
   return l;
 }
 void AiSettingsUiOpen(GuiState *gui) {
@@ -112,6 +168,9 @@ void AiSettingsUiOpen(GuiState *gui) {
   CopyStr(gui->aiModel, sizeof(gui->aiModel), s.model);
   CopyStr(gui->aiKey, sizeof(gui->aiKey), s.api_key);
   CopyStr(gui->aiBase, sizeof(gui->aiBase), s.base_url);
+  if (gui->aiProvider == AI_PROVIDER_GEMINI)
+    CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
+  gui->aiReady = AiSettingsReady(&s, NULL, 0);
   if (gui->aiProvider == AI_PROVIDER_LOCAL &&
       gui->aiBase[0] == '\0') {
     CopyStr(gui->aiBase, sizeof(gui->aiBase),
@@ -119,50 +178,75 @@ void AiSettingsUiOpen(GuiState *gui) {
   }
   gui->aiStatus[0] = '\0';
   gui->showAiSettings = true; gui->showAiPanel = false;
-  gui->aiInputFocus =
-      (gui->aiKey[0] == '\0') ? 2 : 1;
+  gui->aiSelectAllField = 0;
+  if (gui->aiProvider == AI_PROVIDER_LOCAL)
+    gui->aiInputFocus = 1;
+  else
+    gui->aiInputFocus = 2;
 }
 void AiSettingsUiClear(GuiState *gui) {
   if (!gui) return;
   gui->aiModel[0] = '\0'; gui->aiKey[0] = '\0';
   gui->aiBase[0] = '\0'; gui->aiProvider = 0;
   gui->aiStatus[0] = '\0';
+  gui->aiSelectAllField = 0;
+  gui->aiReady = false;
 }
 void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
   if (!gui) return;
   if (!gui->showAiSettings) {
     if (gui->aiInputFocus != 0)
       gui->aiInputFocus = 0;
+    gui->aiSelectAllField = 0;
     gui->isTyping = false;
     return;
   }
-  AiUiLayout l = Layout(sw, sh);
+  AiUiLayout l = Layout(sw, sh, gui->aiProvider);
   gui->aiSettingsRect = l.panel;
   Vector2 m = GetMousePosition();
   bool click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+  int prevFocus = gui->aiInputFocus;
+  bool clickedField = false;
 
   if (click && !CheckCollisionPointRec(m, l.panel)) {
     gui->showAiSettings = false;
     gui->aiInputFocus = 0;
+    gui->aiSelectAllField = 0;
     return;
-}
-  if (click && CheckCollisionPointRec(m, l.model))
+  }
+  if (click && gui->aiProvider == AI_PROVIDER_LOCAL &&
+      CheckCollisionPointRec(m, l.model)) {
     gui->aiInputFocus = 1;
-  else if (click && CheckCollisionPointRec(m, l.key))
+    clickedField = true;
+  } else if (click && CheckCollisionPointRec(m, l.key)) {
     gui->aiInputFocus = 2;
-  else if (click &&
-           CheckCollisionPointRec(m, l.base) &&
-           gui->aiProvider == AI_PROVIDER_LOCAL)
+    clickedField = true;
+  } else if (click &&
+             CheckCollisionPointRec(m, l.base) &&
+             gui->aiProvider == AI_PROVIDER_LOCAL) {
     gui->aiInputFocus = 3;
-  if (click && CheckCollisionPointRec(m, l.provGem))
+    clickedField = true;
+  }
+  if (click && CheckCollisionPointRec(m, l.provGem)) {
     gui->aiProvider = AI_PROVIDER_GEMINI;
-  if (click && CheckCollisionPointRec(m, l.provLocal))
+    CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
+    gui->aiInputFocus = 2;
+    gui->aiSelectAllField = 0;
+  }
+  if (click && CheckCollisionPointRec(m, l.provLocal)) {
     gui->aiProvider = AI_PROVIDER_LOCAL;
+    if (gui->aiModel[0] == '\0')
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "llama3");
+    if (gui->aiBase[0] == '\0')
+      CopyStr(gui->aiBase, sizeof(gui->aiBase),
+              "http://localhost:11434/v1");
+  }
   if (click && CheckCollisionPointRec(m, l.reveal))
     gui->aiKeyReveal = !gui->aiKeyReveal;
   if (click && CheckCollisionPointRec(m, l.close)) {
     gui->showAiSettings = false;
     gui->aiInputFocus = 0;
+    gui->aiSelectAllField = 0;
   }
   if (click && CheckCollisionPointRec(m, l.clear)) {
     char err[64];
@@ -174,26 +258,44 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     AiSettings s;
     memset(&s, 0, sizeof(s));
     s.provider = (AiProvider)gui->aiProvider;
-    CopyStr(s.model, sizeof(s.model), gui->aiModel);
+    if (gui->aiProvider == AI_PROVIDER_GEMINI)
+      CopyStr(s.model, sizeof(s.model), kGeminiModel);
+    else
+      CopyStr(s.model, sizeof(s.model), gui->aiModel);
     CopyStr(s.api_key, sizeof(s.api_key), gui->aiKey);
     CopyStr(s.base_url, sizeof(s.base_url), gui->aiBase);
     char err[64];
     if (AiSettingsSave(&s, err, sizeof(err))) {
+      gui->aiReady = AiSettingsReady(&s, NULL, 0);
       snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Saved");
     } else {
       snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Save failed");
     }
   }
   if (gui->aiProvider != AI_PROVIDER_LOCAL &&
-      gui->aiInputFocus == 3)
+      (gui->aiInputFocus == 1 || gui->aiInputFocus == 3))
     gui->aiInputFocus = 0;
 
+  if (click && !clickedField)
+    gui->aiSelectAllField = 0;
+
+  if (prevFocus != gui->aiInputFocus)
+    gui->aiSelectAllField = 0;
+
   gui->isTyping = gui->aiInputFocus != 0;
-  if (gui->aiInputFocus == 1)
-    InputText(gui->aiModel, sizeof(gui->aiModel));
-  else if (gui->aiInputFocus == 2)
-    InputText(gui->aiKey, sizeof(gui->aiKey));
-  else if (gui->aiInputFocus == 3 &&
-           gui->aiProvider == AI_PROVIDER_LOCAL)
-    InputText(gui->aiBase, sizeof(gui->aiBase));
+  if (gui->aiInputFocus == 1 &&
+      gui->aiProvider == AI_PROVIDER_LOCAL) {
+    bool selectAll = gui->aiSelectAllField == 1;
+    selectAll = InputText(gui->aiModel, sizeof(gui->aiModel), selectAll);
+    gui->aiSelectAllField = selectAll ? 1 : 0;
+  } else if (gui->aiInputFocus == 2) {
+    bool selectAll = gui->aiSelectAllField == 2;
+    selectAll = InputText(gui->aiKey, sizeof(gui->aiKey), selectAll);
+    gui->aiSelectAllField = selectAll ? 2 : 0;
+  } else if (gui->aiInputFocus == 3 &&
+             gui->aiProvider == AI_PROVIDER_LOCAL) {
+    bool selectAll = gui->aiSelectAllField == 3;
+    selectAll = InputText(gui->aiBase, sizeof(gui->aiBase), selectAll);
+    gui->aiSelectAllField = selectAll ? 3 : 0;
+  }
 }

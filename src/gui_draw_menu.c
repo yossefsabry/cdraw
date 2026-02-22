@@ -138,7 +138,13 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
 
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
-  const int aiItemCount = 4;
+  AiSettings aiMenuSettings;
+  char aiMenuErr[64] = {0};
+  (void)AiSettingsLoad(&aiMenuSettings, aiMenuErr,
+                       sizeof(aiMenuErr));
+  bool localHint =
+      aiMenuSettings.provider == AI_PROVIDER_LOCAL;
+  const int aiItemCount = 4 + (localHint ? 2 : 0);
   float aiW = 240.0f;
   float aiH = titleH + pad +
               aiItemCount * itemH + pad;
@@ -255,7 +261,7 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
                  "AI settings needed");
         GuiToastSet(gui, "AI settings needed");
       } else {
-        AiPanelRequest(gui, canvas);
+        AiPanelRequest(gui, canvas, true);
       }
       gui->showMenu = false;
       gui->showAiMenu = false;
@@ -299,6 +305,17 @@ void GuiDrawMenu(GuiState *gui, Canvas *canvas, Theme t) {
       GuiToastSet(gui, "AI analysis cleared");
       gui->showMenu = false;
       gui->showAiMenu = false;
+    }
+    ay += itemH;
+    if (localHint) {
+      DrawTextEx(gui->uiFont,
+                 "Model: any Ollama model",
+                 (Vector2){ax + pad, ay + 4},
+                 11, 1.0f, t.textDim);
+      DrawTextEx(gui->uiFont,
+                 "Base URL: http://localhost:11434/v1",
+                 (Vector2){ax + pad, ay + 18},
+                 11, 1.0f, t.textDim);
     }
   }
 

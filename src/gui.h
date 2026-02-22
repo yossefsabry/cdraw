@@ -94,6 +94,7 @@ typedef struct {
   bool showAiSettings;
   Rectangle aiSettingsRect;
   int aiInputFocus;
+  int aiSelectAllField;
   bool aiKeyReveal;
   int aiProvider;
   char aiModel[64];
@@ -105,6 +106,9 @@ typedef struct {
   bool aiBusy;
   char aiText[2048];
   char aiError[128];
+  bool aiReady;
+  Rectangle aiQuickButtonRect;
+  double aiCooldownUntil;
   bool requestExit;
   bool isTyping;
 
@@ -115,6 +119,7 @@ typedef struct {
   char lastFileName[128];
   char lastDir[256];
   char toast[128];
+  char toastNext[128];
   double toastUntil;
 
   char tooltip[128];

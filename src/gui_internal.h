@@ -32,6 +32,7 @@ typedef enum {
 Theme GuiThemeGet(bool darkMode);
 
 void GuiToastSet(GuiState *gui, const char *msg);
+void GuiToastQueue(GuiState *gui, const char *msg);
 
 void GuiTooltipReset(GuiState *gui);
 void GuiTooltipSet(GuiState *gui, const char *text, Rectangle anchor);

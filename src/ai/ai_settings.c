@@ -18,6 +18,22 @@ static void StrCopy(char *dst, size_t size, const char *src) {
   dst[len] = '\0';
 }
 
+static bool AiDebugEnabled(void) {
+  const char *val = getenv("CDRAW_AI_DEBUG");
+  return val && val[0] != '\0' && strcmp(val, "0") != 0;
+}
+
+static void MaskKeyValue(const char *key, char *out, size_t out_sz) {
+  if (!out || out_sz == 0)
+    return;
+  out[0] = '\0';
+  if (!key || key[0] == '\0')
+    return;
+  size_t len = strlen(key);
+  const char *tail = key + (len > 4 ? len - 4 : 0);
+  snprintf(out, out_sz, "****%s", tail);
+}
+
 static char *Trim(char *s) {
   if (!s)
     return NULL;
@@ -47,7 +63,7 @@ static void Defaults(AiSettings *out) {
     return;
   out->provider = AI_PROVIDER_GEMINI;
   StrCopy(out->model, sizeof(out->model),
-          "gemini-1.5-flash");
+          "gemini-1.5-flash-latest");
   out->api_key[0] = '\0';
   StrCopy(out->base_url, sizeof(out->base_url),
           "http://localhost:11434/v1");
@@ -131,8 +147,10 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
     return false;
   }
 
+  bool loadedFile = false;
   FILE *f = fopen(path, "rb");
   if (f) {
+    loadedFile = true;
     char line[256];
     while (fgets(line, (int)sizeof(line), f)) {
       char *s = Trim(line);
@@ -143,9 +161,11 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
     fclose(f);
   }
 
+  bool envProvider = false;
   if (getenv("CDRAW_AI_PROVIDER")) {
     const char *p = getenv("CDRAW_AI_PROVIDER");
     if (p && p[0] != '\0') {
+      envProvider = true;
       if (StrEqI(p, "local") ||
           StrEqI(p, "openai"))
         out->provider = AI_PROVIDER_LOCAL;
@@ -153,12 +173,44 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
         out->provider = AI_PROVIDER_GEMINI;
     }
   }
+  bool envModel = false;
+  bool envKey = false;
+  bool envBase = false;
+  if (getenv("CDRAW_AI_MODEL")) {
+    const char *v = getenv("CDRAW_AI_MODEL");
+    if (v && v[0] != '\0')
+      envModel = true;
+  }
+  if (getenv("CDRAW_AI_KEY")) {
+    const char *v = getenv("CDRAW_AI_KEY");
+    if (v && v[0] != '\0')
+      envKey = true;
+  }
+  if (getenv("CDRAW_AI_BASE_URL")) {
+    const char *v = getenv("CDRAW_AI_BASE_URL");
+    if (v && v[0] != '\0')
+      envBase = true;
+  }
   ApplyEnv("CDRAW_AI_MODEL", out->model,
            sizeof(out->model));
   ApplyEnv("CDRAW_AI_KEY", out->api_key,
            sizeof(out->api_key));
   ApplyEnv("CDRAW_AI_BASE_URL", out->base_url,
            sizeof(out->base_url));
+
+  if (AiDebugEnabled()) {
+    char masked[32];
+    MaskKeyValue(out->api_key, masked, sizeof(masked));
+    fprintf(stderr,
+            "AI DEBUG: settings path=%s file=%s env_provider=%d env_model=%d env_key=%d env_base=%d\n",
+            path, loadedFile ? "yes" : "no", envProvider, envModel, envKey, envBase);
+    fprintf(stderr,
+            "AI DEBUG: settings provider=%s model=%s key=%s base=%s\n",
+            AiProviderLabel(out->provider),
+            out->model[0] ? out->model : "(empty)",
+            masked[0] ? masked : "(empty)",
+            out->base_url[0] ? out->base_url : "(empty)");
+  }
 
   if (out->provider == AI_PROVIDER_LOCAL) {
     if (out->model[0] == '\0')
@@ -176,7 +228,7 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
   }
   if (out->model[0] == '\0') {
     StrCopy(out->model, sizeof(out->model),
-            "gemini-1.5-flash");
+            "gemini-1.5-flash-latest");
   }
   return true;
 }
