@@ -116,6 +116,8 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float pad = 18.0f;
   float row = 32.0f;
   float field = 36.0f;
+  float fieldGap = 30.0f;
+  float btnTopPad = 28.0f;
   float fx = x + pad;
   float fy = y + 58.0f;
   float fw = w - pad * 2.0f;
@@ -125,23 +127,23 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   l.provGem = (Rectangle){fx, fy, half, row};
   l.provLocal = (Rectangle){fx + half + gap,
                             fy, half, row};
-  fy += row + 22.0f;
+  fy += row + 30.0f;
   bool showModel = provider == AI_PROVIDER_LOCAL;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
   if (showModel) {
     l.model = (Rectangle){fx, fy, fw, field};
-    fy += field + 22.0f;
+    fy += field + fieldGap;
   }
   l.key = (Rectangle){fx, fy, fw, field};
   fy += field;
   if (showBase) {
-    fy += 22.0f;
+    fy += fieldGap;
     l.base = (Rectangle){fx, fy, fw, field};
-    fy += field + 18.0f;
+    fy += field + btnTopPad;
   } else {
-    fy += 18.0f;
+    fy += btnTopPad;
   }
   float btnW = (fw - gap * 2.0f) / 3.0f;
   l.save = (Rectangle){fx, fy, btnW, row};

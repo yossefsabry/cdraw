@@ -58,6 +58,8 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float pad = 18.0f;
   float row = 32.0f;
   float field = 36.0f;
+  float fieldGap = 30.0f;
+  float btnTopPad = 28.0f;
   float fx = x + pad;
   float fy = y + 58.0f;
   float fw = w - pad * 2.0f;
@@ -67,23 +69,23 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   l.provGem = (Rectangle){fx, fy, half, row};
   l.provLocal = (Rectangle){fx + half + gap,
                             fy, half, row};
-  fy += row + 22.0f;
+  fy += row + 30.0f;
   bool showModel = provider == AI_PROVIDER_LOCAL;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
   if (showModel) {
     l.model = (Rectangle){fx, fy, fw, field};
-    fy += field + 22.0f;
+    fy += field + fieldGap;
   }
   l.key = (Rectangle){fx, fy, fw, field};
   fy += field;
   if (showBase) {
-    fy += 22.0f;
+    fy += fieldGap;
     l.base = (Rectangle){fx, fy, fw, field};
-    fy += field + 18.0f;
+    fy += field + btnTopPad;
   } else {
-    fy += 18.0f;
+    fy += btnTopPad;
   }
   float btnW = (fw - gap * 2.0f) / 3.0f;
   l.save = (Rectangle){fx, fy, btnW, row};
@@ -114,10 +116,10 @@ static void DrawField(GuiState *gui, Rectangle r,
                  t.primary : t.border;
   DrawRectangleRoundedLinesEx(r, 0.18f, 6,
                               1.0f, border);
-  float labelOffset = 20.0f;
+  float labelOffset = 26.0f;
   DrawTextEx(gui->uiFont, label,
              (Vector2){r.x, r.y - labelOffset},
-             12, 1.0f, t.textDim);
+             15, 1.0f, t.textDim);
   Color text = dim ? t.textDim : t.text;
   const char *show =
       (val && val[0]) ? val : "";
@@ -254,9 +256,11 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
     bool showStatus = gui->aiStatus[0] != '\0';
     int lines = (showHints ? 2 : 0) + (showStatus ? 1 : 0);
     if (lines > 0) {
-      float lineH = 12.0f;
-      float infoY = l.close.y + l.close.height + 8.0f;
-      float infoMax = l.panel.y + l.panel.height - 12.0f;
+      float lineH = 14.0f;
+      float infoTopPad = 12.0f;
+      float infoBottomPad = 16.0f;
+      float infoY = l.close.y + l.close.height + infoTopPad;
+      float infoMax = l.panel.y + l.panel.height - infoBottomPad;
       float lastLine = infoY + (lines - 1) * lineH;
       if (lastLine > infoMax)
         infoY = infoMax - (lines - 1) * lineH;
@@ -266,17 +270,17 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
         DrawTextEx(gui->uiFont,
                    "Local models use an OpenAI endpoint.",
                    (Vector2){x, y},
-                   11, 1.0f, t.textDim);
+                   12, 1.0f, t.textDim);
         DrawTextEx(gui->uiFont,
                    "Example: http://localhost:11434/v1",
                    (Vector2){x, y + lineH},
-                   11, 1.0f, t.textDim);
+                   12, 1.0f, t.textDim);
         y += lineH * 2.0f;
       }
       if (showStatus) {
         DrawTextEx(gui->uiFont, gui->aiStatus,
                    (Vector2){x, y},
-                   12, 1.0f, t.textDim);
+                   13, 1.0f, t.textDim);
       }
     }
   }
