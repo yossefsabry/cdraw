@@ -1,4 +1,6 @@
 #include "gui_internal.h"
+#include "ai/ai_panel.h"
+#include "ai/ai_settings_ui.h"
 #include <math.h>
 
 void DrawGui(GuiState *gui, Canvas *canvas) {
@@ -34,6 +36,8 @@ void DrawGui(GuiState *gui, Canvas *canvas) {
                  paletteW, paletteH);
   GuiDrawColorPicker(gui, t);
   GuiDrawHelpPanel(gui, canvas, t, sw, sh);
+  AiPanelDraw(gui, canvas, t, sw, sh);
+  AiSettingsUiDraw(gui, t, sw, sh);
   GuiDrawFooter(gui, canvas, t, sw, sh);
   GuiDrawTooltip(gui, t);
 }

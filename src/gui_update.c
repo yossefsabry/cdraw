@@ -1,6 +1,7 @@
 #include "gui_internal.h"
 #include "prefs.h"
 #include "raymath.h"
+#include "ai/ai_settings_ui.h"
 
 static bool IsPanningNow(int activeTool, bool inputCaptured) {
   bool isPanning = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
@@ -116,6 +117,8 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
       GuiToastSet(gui, "Welcome!");
     }
   } else {
+    AiSettingsUiUpdate(gui, GetScreenWidth(),
+                       GetScreenHeight());
     float wheel = GetMouseWheelMove();
     if (ctrl && shift && wheel != 0.0f) {
       gui->currentThickness = Clamp(gui->currentThickness + wheel, 1.0f, 21.0f);
@@ -178,6 +181,9 @@ void UpdateGui(GuiState *gui, Canvas *canvas) {
       gui->showColorPicker = false;
       gui->showExportMenu = false;
       gui->showHelp = false;
+      gui->showAiPanel = false;
+      gui->showAiMenu = false;
+      gui->showAiSettings = false;
     }
   }
 

@@ -89,6 +89,22 @@ typedef struct {
   bool showHelp;
   Rectangle helpRect;
   Rectangle helpButtonRect;
+  bool showAiMenu;
+  Rectangle aiMenuRect;
+  bool showAiSettings;
+  Rectangle aiSettingsRect;
+  int aiInputFocus;
+  bool aiKeyReveal;
+  int aiProvider;
+  char aiModel[64];
+  char aiKey[128];
+  char aiBase[128];
+  char aiStatus[128];
+  bool showAiPanel;
+  Rectangle aiRect;
+  bool aiBusy;
+  char aiText[2048];
+  char aiError[128];
   bool requestExit;
   bool isTyping;
 

@@ -9,15 +9,18 @@ ifeq ($(DEBUG),1)
 else
   CFLAGS += -O2 -DNDEBUG
 endif
-LDFLAGS = -lraylib -lm -lpthread -ldl -lrt -lX11 $(GTK_LIBS)
+LDFLAGS = -lraylib -lm -lpthread -ldl -lrt -lX11 -lcurl \
+  $(GTK_LIBS)
 CFLAGS += $(GTK_CFLAGS)
 
 SRC_DIR = src
+AI_DIR = $(SRC_DIR)/ai
 OBJ_DIR = obj
 ICON_SRC_DIR = public
 ICON_OUT_DIR = assets/ui_icons
 
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+SRCS = $(wildcard $(SRC_DIR)/*.c) \
+  $(wildcard $(AI_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 TARGET = cdraw
@@ -42,6 +45,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR):

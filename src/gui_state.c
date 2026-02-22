@@ -44,6 +44,22 @@ void InitGui(GuiState *gui) {
   gui->showHelp = false;
   gui->helpRect = (Rectangle){0, 0, 0, 0};
   gui->helpButtonRect = (Rectangle){0, 0, 0, 0};
+  gui->showAiMenu = false;
+  gui->aiMenuRect = (Rectangle){0, 0, 0, 0};
+  gui->showAiSettings = false;
+  gui->aiSettingsRect = (Rectangle){0, 0, 0, 0};
+  gui->aiInputFocus = 0;
+  gui->aiKeyReveal = false;
+  gui->aiProvider = 0;
+  gui->aiModel[0] = '\0';
+  gui->aiKey[0] = '\0';
+  gui->aiBase[0] = '\0';
+  gui->aiStatus[0] = '\0';
+  gui->showAiPanel = false;
+  gui->aiRect = (Rectangle){0, 0, 0, 0};
+  gui->aiBusy = false;
+  gui->aiText[0] = '\0';
+  gui->aiError[0] = '\0';
   gui->requestExit = false;
 
   gui->documents = NULL;
@@ -101,6 +117,15 @@ bool IsMouseOverGui(GuiState *gui) {
   bool overMenu = gui->showMenu && CheckCollisionPointRec(mouse, gui->menuRect);
   bool overExport = gui->showExportMenu &&
                     CheckCollisionPointRec(mouse, gui->exportMenuRect);
-  bool overHelp = gui->showHelp && CheckCollisionPointRec(mouse, gui->helpRect);
-  return overTop || overPalette || overPicker || overMenu || overExport || overHelp;
+  bool overHelp = gui->showHelp &&
+                  CheckCollisionPointRec(mouse, gui->helpRect);
+  bool overAi = gui->showAiPanel &&
+                CheckCollisionPointRec(mouse, gui->aiRect);
+  bool overAiMenu = gui->showAiMenu &&
+                    CheckCollisionPointRec(mouse, gui->aiMenuRect);
+  bool overAiSet = gui->showAiSettings &&
+                   CheckCollisionPointRec(mouse, gui->aiSettingsRect);
+  return overTop || overPalette || overPicker || overMenu ||
+         overExport || overHelp || overAi || overAiMenu ||
+         overAiSet;
 }
