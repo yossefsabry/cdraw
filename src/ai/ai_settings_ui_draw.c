@@ -8,6 +8,9 @@ typedef struct {
   Rectangle provOpen;
   Rectangle provLocal;
   Rectangle model;
+  Rectangle preset4o;
+  Rectangle preset4oMini;
+  Rectangle preset41Mini;
   Rectangle key;
   Rectangle base;
   Rectangle save;
@@ -60,6 +63,8 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float row = 32.0f;
   float field = 36.0f;
   float fieldGap = 30.0f;
+  float presetRow = 26.0f;
+  float presetGap = 8.0f;
   float btnTopPad = 28.0f;
   float fx = x + pad;
   float fy = y + 58.0f;
@@ -74,13 +79,28 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
                             fy, third, row};
   fy += row + 30.0f;
   bool showModel = provider == AI_PROVIDER_LOCAL ||
-                   provider == AI_PROVIDER_OPENAI;
+                   provider == AI_PROVIDER_OPENAI ||
+                   provider == AI_PROVIDER_GEMINI;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
+  l.preset4o = (Rectangle){0, 0, 0, 0};
+  l.preset4oMini = (Rectangle){0, 0, 0, 0};
+  l.preset41Mini = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
   if (showModel) {
     l.model = (Rectangle){fx, fy, fw, field};
-    fy += field + fieldGap;
+    fy += field;
+    if (provider == AI_PROVIDER_OPENAI ||
+        provider == AI_PROVIDER_GEMINI) {
+      fy += 12.0f;
+      float pw = (fw - presetGap * 2.0f) / 3.0f;
+      l.preset4o = (Rectangle){fx, fy, pw, presetRow};
+      l.preset4oMini = (Rectangle){fx + pw + presetGap, fy, pw, presetRow};
+      l.preset41Mini = (Rectangle){fx + (pw + presetGap) * 2.0f, fy, pw, presetRow};
+      fy += presetRow + fieldGap;
+    } else {
+      fy += fieldGap;
+    }
   }
   l.key = (Rectangle){fx, fy, fw, field};
   fy += field;
@@ -216,7 +236,7 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
       gui->aiProvider ==
       AI_PROVIDER_LOCAL);
 
-  char keyView[64];
+  char keyView[256];
   if (gui->aiKeyReveal)
     CopyStr(keyView, sizeof(keyView), gui->aiKey);
   else
@@ -239,6 +259,22 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
               gui->aiInputFocus == 1,
               false,
               gui->aiSelectAllField == 1, t);
+  }
+  if (gui->aiProvider == AI_PROVIDER_OPENAI) {
+    bool is4o = strcmp(gui->aiModel, "gpt-4o") == 0;
+    bool is4oMini = strcmp(gui->aiModel, "gpt-4o-mini") == 0;
+    bool is41Mini = strcmp(gui->aiModel, "gpt-4.1-mini") == 0;
+    Btn(gui, l.preset4o, "gpt-4o", t, is4o);
+    Btn(gui, l.preset4oMini, "gpt-4o-mini", t, is4oMini);
+    Btn(gui, l.preset41Mini, "gpt-4.1-mini", t, is41Mini);
+  }
+  if (gui->aiProvider == AI_PROVIDER_GEMINI) {
+    bool isFlash = strcmp(gui->aiModel, "gemini-1.5-flash") == 0;
+    bool isPro = strcmp(gui->aiModel, "gemini-1.5-pro") == 0;
+    bool isFlash2 = strcmp(gui->aiModel, "gemini-2.0-flash") == 0;
+    Btn(gui, l.preset4o, "gemini-1.5-flash", t, isFlash);
+    Btn(gui, l.preset4oMini, "gemini-1.5-pro", t, isPro);
+    Btn(gui, l.preset41Mini, "gemini-2.0-flash", t, isFlash2);
   }
   DrawField(gui, l.key, keyLabel,
             keyView,

@@ -8,6 +8,9 @@ typedef struct {
   Rectangle provOpen;
   Rectangle provLocal;
   Rectangle model;
+  Rectangle preset4o;
+  Rectangle preset4oMini;
+  Rectangle preset41Mini;
   Rectangle key;
   Rectangle base;
   Rectangle save;
@@ -23,8 +26,8 @@ static void CopyStr(char *dst, size_t cap, const char *src) {
   memcpy(dst, src, len);
   dst[len] = '\0';
 }
-static const char kGeminiModel[] = "gemini-1.5-flash-latest";
-static const char kOpenAIModel[] = "gpt-4o-mini";
+static const char kGeminiModel[] = "gemini-1.5-flash";
+static const char kOpenAIModel[] = "gpt-4o";
 static const char kOpenAIBase[] = "https://api.openai.com/v1";
 static void AppendChar(char *buf, size_t cap, int c) {
   size_t len = strlen(buf);
@@ -120,6 +123,8 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float row = 32.0f;
   float field = 36.0f;
   float fieldGap = 30.0f;
+  float presetRow = 26.0f;
+  float presetGap = 8.0f;
   float btnTopPad = 28.0f;
   float fx = x + pad;
   float fy = y + 58.0f;
@@ -134,13 +139,28 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
                             fy, third, row};
   fy += row + 30.0f;
   bool showModel = provider == AI_PROVIDER_LOCAL ||
-                   provider == AI_PROVIDER_OPENAI;
+                   provider == AI_PROVIDER_OPENAI ||
+                   provider == AI_PROVIDER_GEMINI;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
+  l.preset4o = (Rectangle){0, 0, 0, 0};
+  l.preset4oMini = (Rectangle){0, 0, 0, 0};
+  l.preset41Mini = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
   if (showModel) {
     l.model = (Rectangle){fx, fy, fw, field};
-    fy += field + fieldGap;
+    fy += field;
+    if (provider == AI_PROVIDER_OPENAI ||
+        provider == AI_PROVIDER_GEMINI) {
+      fy += 12.0f;
+      float pw = (fw - presetGap * 2.0f) / 3.0f;
+      l.preset4o = (Rectangle){fx, fy, pw, presetRow};
+      l.preset4oMini = (Rectangle){fx + pw + presetGap, fy, pw, presetRow};
+      l.preset41Mini = (Rectangle){fx + (pw + presetGap) * 2.0f, fy, pw, presetRow};
+      fy += presetRow + fieldGap;
+    } else {
+      fy += fieldGap;
+    }
   }
   l.key = (Rectangle){fx, fy, fw, field};
   fy += field;
@@ -176,7 +196,8 @@ void AiSettingsUiOpen(GuiState *gui) {
   CopyStr(gui->aiModel, sizeof(gui->aiModel), s.model);
   CopyStr(gui->aiKey, sizeof(gui->aiKey), s.api_key);
   CopyStr(gui->aiBase, sizeof(gui->aiBase), s.base_url);
-  if (gui->aiProvider == AI_PROVIDER_GEMINI)
+  if (gui->aiProvider == AI_PROVIDER_GEMINI &&
+      gui->aiModel[0] == '\0')
     CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
   if (gui->aiProvider == AI_PROVIDER_OPENAI &&
       gui->aiModel[0] == '\0')
@@ -231,7 +252,8 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
   }
   if (click &&
       (gui->aiProvider == AI_PROVIDER_LOCAL ||
-       gui->aiProvider == AI_PROVIDER_OPENAI) &&
+       gui->aiProvider == AI_PROVIDER_OPENAI ||
+       gui->aiProvider == AI_PROVIDER_GEMINI) &&
       CheckCollisionPointRec(m, l.model)) {
     gui->aiInputFocus = 1;
     clickedField = true;
@@ -246,7 +268,8 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
   }
   if (click && CheckCollisionPointRec(m, l.provGem)) {
     gui->aiProvider = AI_PROVIDER_GEMINI;
-    CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
+    if (gui->aiModel[0] == '\0')
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
     gui->aiInputFocus = 2;
     gui->aiSelectAllField = 0;
   }
@@ -257,6 +280,36 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     CopyStr(gui->aiBase, sizeof(gui->aiBase), kOpenAIBase);
     gui->aiInputFocus = 2;
     gui->aiSelectAllField = 0;
+  }
+  if (click && gui->aiProvider == AI_PROVIDER_OPENAI) {
+    if (CheckCollisionPointRec(m, l.preset4o)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gpt-4o");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    } else if (CheckCollisionPointRec(m, l.preset4oMini)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gpt-4o-mini");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    } else if (CheckCollisionPointRec(m, l.preset41Mini)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gpt-4.1-mini");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    }
+  }
+  if (click && gui->aiProvider == AI_PROVIDER_GEMINI) {
+    if (CheckCollisionPointRec(m, l.preset4o)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gemini-1.5-flash");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    } else if (CheckCollisionPointRec(m, l.preset4oMini)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gemini-1.5-pro");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    } else if (CheckCollisionPointRec(m, l.preset41Mini)) {
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), "gemini-2.0-flash");
+      gui->aiInputFocus = 1;
+      gui->aiSelectAllField = 0;
+    }
   }
   if (click && CheckCollisionPointRec(m, l.provLocal)) {
     gui->aiProvider = AI_PROVIDER_LOCAL;
@@ -283,9 +336,12 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     AiSettings s;
     memset(&s, 0, sizeof(s));
     s.provider = (AiProvider)gui->aiProvider;
-    if (gui->aiProvider == AI_PROVIDER_GEMINI)
-      CopyStr(s.model, sizeof(s.model), kGeminiModel);
-    else if (gui->aiProvider == AI_PROVIDER_OPENAI) {
+    if (gui->aiProvider == AI_PROVIDER_GEMINI) {
+      if (gui->aiModel[0] == '\0')
+        CopyStr(s.model, sizeof(s.model), kGeminiModel);
+      else
+        CopyStr(s.model, sizeof(s.model), gui->aiModel);
+    } else if (gui->aiProvider == AI_PROVIDER_OPENAI) {
       if (gui->aiModel[0] == '\0')
         CopyStr(s.model, sizeof(s.model), kOpenAIModel);
       else
@@ -304,9 +360,6 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
       snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Save failed");
     }
   }
-  if (gui->aiProvider == AI_PROVIDER_GEMINI &&
-      gui->aiInputFocus == 1)
-    gui->aiInputFocus = 0;
   if (gui->aiProvider != AI_PROVIDER_LOCAL &&
       gui->aiInputFocus == 3)
     gui->aiInputFocus = 0;

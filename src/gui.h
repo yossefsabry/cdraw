@@ -98,7 +98,7 @@ typedef struct {
   bool aiKeyReveal;
   int aiProvider;
   char aiModel[64];
-  char aiKey[128];
+  char aiKey[256];
   char aiBase[128];
   char aiStatus[128];
   bool showAiPanel;

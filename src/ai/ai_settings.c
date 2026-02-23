@@ -63,7 +63,7 @@ static void Defaults(AiSettings *out) {
     return;
   out->provider = AI_PROVIDER_GEMINI;
   StrCopy(out->model, sizeof(out->model),
-          "gemini-1.5-flash-latest");
+          "gemini-1.5-flash");
   out->api_key[0] = '\0';
   StrCopy(out->base_url, sizeof(out->base_url),
           "http://localhost:11434/v1");
@@ -154,7 +154,7 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
   FILE *f = fopen(path, "rb");
   if (f) {
     loadedFile = true;
-    char line[256];
+    char line[512];
     while (fgets(line, (int)sizeof(line), f)) {
       char *s = Trim(line);
       if (s[0] == '\0' || s[0] == '#' || s[0] == ';')
@@ -226,7 +226,7 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
   }
   if (out->provider == AI_PROVIDER_OPENAI) {
     if (out->model[0] == '\0')
-      StrCopy(out->model, sizeof(out->model), "gpt-4o-mini");
+      StrCopy(out->model, sizeof(out->model), "gpt-4o");
     if (out->base_url[0] == '\0' ||
         strcmp(out->base_url, "http://localhost:11434/v1") == 0)
       StrCopy(out->base_url, sizeof(out->base_url),

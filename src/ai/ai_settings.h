@@ -13,7 +13,7 @@ typedef enum {
 typedef struct {
   AiProvider provider;
   char model[64];
-  char api_key[128];
+  char api_key[256];
   char base_url[128];
 } AiSettings;
 
