@@ -36,6 +36,28 @@ static void WrapText(const char *src, char *dst,
   dst[out] = '\0';
 }
 
+static void FormatToastError(const char *err,
+                             char *out,
+                             size_t out_sz) {
+  if (!out || out_sz == 0)
+    return;
+  out[0] = '\0';
+  if (!err || err[0] == '\0') {
+    snprintf(out, out_sz, "AI failed");
+    return;
+  }
+  char clean[96];
+  size_t j = 0;
+  for (size_t i = 0; err[i] && j + 1 < sizeof(clean); i++) {
+    unsigned char c = (unsigned char)err[i];
+    if (c < 32 || c == 127)
+      c = ' ';
+    clean[j++] = (char)c;
+  }
+  clean[j] = '\0';
+  snprintf(out, out_sz, "AI failed: %s", clean);
+}
+
 static bool PanelButton(GuiState *gui, Rectangle r,
                         const char *label, Theme t) {
   Vector2 mouse = GetMousePosition();
@@ -114,7 +136,9 @@ void AiPanelRequest(GuiState *gui, const Canvas *canvas,
     WrapText(msg, gui->aiText,
              sizeof(gui->aiText), 60);
     snprintf(gui->aiError, sizeof(gui->aiError), "%s", err);
-    GuiToastQueue(gui, "AI failed");
+    char toast[128];
+    FormatToastError(err, toast, sizeof(toast));
+    GuiToastQueue(gui, toast);
     if (showPanel)
       gui->showAiPanel = true;
     gui->aiBusy = false;

@@ -70,6 +70,12 @@ static bool ExtractTextBackend(const char *json,
   return AiJsonFindString(json, "text", out, out_sz);
 }
 
+static bool ExtractErrorBackend(const char *json,
+                                char *out,
+                                size_t out_sz) {
+  return AiJsonFindString(json, "message", out, out_sz);
+}
+
 static void StripTrailingSlash(const char *src,
                                char *out,
                                size_t out_sz) {
@@ -181,8 +187,13 @@ bool AiAnalyzeCanvas(const Canvas *canvas,
     free(b64);
     free(model_esc);
     free(key_esc);
-    if (ok)
+    if (resp[0] != '\0')
       DebugPrintResponse(resp);
+    if (!ok && err && err_sz > 0) {
+      char msg[256];
+      if (ExtractErrorBackend(resp, msg, sizeof(msg)))
+        snprintf(err, err_sz, "%s", msg);
+    }
     if (ok)
       ok = ExtractTextBackend(resp, out, out_sz);
   } else {
@@ -220,8 +231,13 @@ bool AiAnalyzeCanvas(const Canvas *canvas,
     free(model_esc);
     free(base_esc);
     free(key_esc);
-    if (ok)
+    if (resp[0] != '\0')
       DebugPrintResponse(resp);
+    if (!ok && err && err_sz > 0) {
+      char msg[256];
+      if (ExtractErrorBackend(resp, msg, sizeof(msg)))
+        snprintf(err, err_sz, "%s", msg);
+    }
     if (ok)
       ok = ExtractTextBackend(resp, out, out_sz);
   }

@@ -31,6 +31,22 @@ static size_t WriteCb(char *ptr, size_t size, size_t nmemb, void *ud) {
   return n;
 }
 
+static void SanitizeSnippet(const char *src, char *out, size_t out_sz) {
+  if (!out || out_sz == 0)
+    return;
+  out[0] = '\0';
+  if (!src)
+    return;
+  size_t j = 0;
+  for (size_t i = 0; src[i] && j + 1 < out_sz; i++) {
+    unsigned char c = (unsigned char)src[i];
+    if (c < 32 || c == 127)
+      c = ' ';
+    out[j++] = (char)c;
+  }
+  out[j] = '\0';
+}
+
 static bool CurlInitOnce(char *err, size_t err_sz) {
   static int ready = 0;
   if (ready)
@@ -92,7 +108,13 @@ bool HttpPostJson(const char *url,
   }
   if (code < 200 || code >= 300) {
     if (err && err_sz > 0)
-      snprintf(err, err_sz, "http %ld", code);
+      if (buf.data && buf.data[0] != '\0') {
+        char snippet[160];
+        SanitizeSnippet(buf.data, snippet, sizeof(snippet));
+        snprintf(err, err_sz, "http %ld: %s", code, snippet);
+      } else {
+        snprintf(err, err_sz, "http %ld", code);
+      }
     free(buf.data);
     return false;
   }

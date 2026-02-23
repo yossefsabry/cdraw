@@ -5,6 +5,57 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool BackendDebugEnabled(void) {
+  const char *val = getenv("CDRAW_AI_BACKEND_DEBUG");
+  if (val && val[0] != '\0' && strcmp(val, "0") != 0)
+    return true;
+  val = getenv("CDRAW_AI_DEBUG");
+  return val && val[0] != '\0' && strcmp(val, "0") != 0;
+}
+
+static void MaskKeyValue(const char *key, char *out, size_t out_sz) {
+  if (!out || out_sz == 0)
+    return;
+  out[0] = '\0';
+  if (!key || key[0] == '\0')
+    return;
+  size_t len = strlen(key);
+  const char *tail = key + (len > 4 ? len - 4 : 0);
+  snprintf(out, out_sz, "****%s", tail);
+}
+
+static void DebugLogAnalyzeRequest(const char *provider,
+                                   const char *model,
+                                   const char *base_url,
+                                   const char *api_key,
+                                   const char *prompt,
+                                   const char *image) {
+  if (!BackendDebugEnabled())
+    return;
+  char masked[32];
+  MaskKeyValue(api_key, masked, sizeof(masked));
+  size_t prompt_len = prompt ? strlen(prompt) : 0;
+  size_t image_len = image ? strlen(image) : 0;
+  fprintf(stderr,
+          "backend_ai: /ai/analyze provider=%s model=%s base=%s api_key=%s prompt_bytes=%zu image_bytes=%zu\n",
+          provider ? provider : "(null)",
+          model ? model : "(null)",
+          base_url && base_url[0] ? base_url : "(empty)",
+          masked[0] ? masked : "(empty)",
+          prompt_len, image_len);
+}
+
+static void DebugLogUpstream(const char *provider,
+                             const char *url,
+                             size_t body_len) {
+  if (!BackendDebugEnabled())
+    return;
+  fprintf(stderr,
+          "backend_ai: upstream provider=%s url=%s body_bytes=%zu\n",
+          provider ? provider : "(null)",
+          url ? url : "(null)", body_len);
+}
+
 static void RespondError(HttpResponse *res, int status, const char *msg) {
   if (!res)
     return;
@@ -134,6 +185,7 @@ static bool SendLocal(const char *model,
            "{\"role\":\"user\",\"content\":\"%s\"}],"
            "\"temperature\":0.2}",
            model_esc, prompt_esc);
+  DebugLogUpstream("local", url, strlen(body));
   char *resp = NULL;
   bool ok = HttpPostJson(url, body, api_key, &resp, err, err_sz);
   free(body);
@@ -194,6 +246,7 @@ static bool SendGemini(const char *model,
   snprintf(url, sizeof(url),
            "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
            model_esc, api_key);
+  DebugLogUpstream("gemini", url, strlen(body));
   char *resp = NULL;
   bool ok = HttpPostJson(url, body, NULL, &resp, err, err_sz);
   if (!ok && err && strncmp(err, "http 404", 8) == 0) {
@@ -247,6 +300,8 @@ void HandleAiAnalyze(const HttpRequest *req, HttpResponse *res) {
   char *base_url = JsonExtractStringAlloc(req->body, "base_url");
   char *api_key = JsonExtractStringAlloc(req->body, "api_key");
   char *image = JsonExtractStringAlloc(req->body, "image");
+
+  DebugLogAnalyzeRequest(provider, model, base_url, api_key, prompt, image);
 
   char err[128] = {0};
   char *text = NULL;
