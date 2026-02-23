@@ -5,6 +5,7 @@
 typedef struct {
   Rectangle panel;
   Rectangle provGem;
+  Rectangle provOpen;
   Rectangle provLocal;
   Rectangle model;
   Rectangle key;
@@ -23,6 +24,8 @@ static void CopyStr(char *dst, size_t cap, const char *src) {
   dst[len] = '\0';
 }
 static const char kGeminiModel[] = "gemini-1.5-flash-latest";
+static const char kOpenAIModel[] = "gpt-4o-mini";
+static const char kOpenAIBase[] = "https://api.openai.com/v1";
 static void AppendChar(char *buf, size_t cap, int c) {
   size_t len = strlen(buf);
   if (len + 1 >= cap) return;
@@ -122,13 +125,16 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float fy = y + 58.0f;
   float fw = w - pad * 2.0f;
   float gap = 10.0f;
-  float half = (fw - gap) * 0.5f;
+  float third = (fw - gap * 2.0f) / 3.0f;
 
-  l.provGem = (Rectangle){fx, fy, half, row};
-  l.provLocal = (Rectangle){fx + half + gap,
-                            fy, half, row};
+  l.provGem = (Rectangle){fx, fy, third, row};
+  l.provOpen = (Rectangle){fx + third + gap,
+                           fy, third, row};
+  l.provLocal = (Rectangle){fx + (third + gap) * 2.0f,
+                            fy, third, row};
   fy += row + 30.0f;
-  bool showModel = provider == AI_PROVIDER_LOCAL;
+  bool showModel = provider == AI_PROVIDER_LOCAL ||
+                   provider == AI_PROVIDER_OPENAI;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
@@ -172,11 +178,18 @@ void AiSettingsUiOpen(GuiState *gui) {
   CopyStr(gui->aiBase, sizeof(gui->aiBase), s.base_url);
   if (gui->aiProvider == AI_PROVIDER_GEMINI)
     CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
+  if (gui->aiProvider == AI_PROVIDER_OPENAI &&
+      gui->aiModel[0] == '\0')
+    CopyStr(gui->aiModel, sizeof(gui->aiModel), kOpenAIModel);
   gui->aiReady = AiSettingsReady(&s, NULL, 0);
   if (gui->aiProvider == AI_PROVIDER_LOCAL &&
       gui->aiBase[0] == '\0') {
     CopyStr(gui->aiBase, sizeof(gui->aiBase),
             "http://localhost:11434/v1");
+  }
+  if (gui->aiProvider == AI_PROVIDER_OPENAI &&
+      gui->aiBase[0] == '\0') {
+    CopyStr(gui->aiBase, sizeof(gui->aiBase), kOpenAIBase);
   }
   gui->aiStatus[0] = '\0';
   gui->showAiSettings = true; gui->showAiPanel = false;
@@ -216,7 +229,9 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     gui->aiSelectAllField = 0;
     return;
   }
-  if (click && gui->aiProvider == AI_PROVIDER_LOCAL &&
+  if (click &&
+      (gui->aiProvider == AI_PROVIDER_LOCAL ||
+       gui->aiProvider == AI_PROVIDER_OPENAI) &&
       CheckCollisionPointRec(m, l.model)) {
     gui->aiInputFocus = 1;
     clickedField = true;
@@ -232,6 +247,14 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
   if (click && CheckCollisionPointRec(m, l.provGem)) {
     gui->aiProvider = AI_PROVIDER_GEMINI;
     CopyStr(gui->aiModel, sizeof(gui->aiModel), kGeminiModel);
+    gui->aiInputFocus = 2;
+    gui->aiSelectAllField = 0;
+  }
+  if (click && CheckCollisionPointRec(m, l.provOpen)) {
+    gui->aiProvider = AI_PROVIDER_OPENAI;
+    if (gui->aiModel[0] == '\0')
+      CopyStr(gui->aiModel, sizeof(gui->aiModel), kOpenAIModel);
+    CopyStr(gui->aiBase, sizeof(gui->aiBase), kOpenAIBase);
     gui->aiInputFocus = 2;
     gui->aiSelectAllField = 0;
   }
@@ -262,10 +285,17 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
     s.provider = (AiProvider)gui->aiProvider;
     if (gui->aiProvider == AI_PROVIDER_GEMINI)
       CopyStr(s.model, sizeof(s.model), kGeminiModel);
-    else
+    else if (gui->aiProvider == AI_PROVIDER_OPENAI) {
+      if (gui->aiModel[0] == '\0')
+        CopyStr(s.model, sizeof(s.model), kOpenAIModel);
+      else
+        CopyStr(s.model, sizeof(s.model), gui->aiModel);
+      CopyStr(s.base_url, sizeof(s.base_url), kOpenAIBase);
+    } else
       CopyStr(s.model, sizeof(s.model), gui->aiModel);
     CopyStr(s.api_key, sizeof(s.api_key), gui->aiKey);
-    CopyStr(s.base_url, sizeof(s.base_url), gui->aiBase);
+    if (gui->aiProvider == AI_PROVIDER_LOCAL)
+      CopyStr(s.base_url, sizeof(s.base_url), gui->aiBase);
     char err[64];
     if (AiSettingsSave(&s, err, sizeof(err))) {
       gui->aiReady = AiSettingsReady(&s, NULL, 0);
@@ -274,8 +304,11 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
       snprintf(gui->aiStatus, sizeof(gui->aiStatus), "Save failed");
     }
   }
+  if (gui->aiProvider == AI_PROVIDER_GEMINI &&
+      gui->aiInputFocus == 1)
+    gui->aiInputFocus = 0;
   if (gui->aiProvider != AI_PROVIDER_LOCAL &&
-      (gui->aiInputFocus == 1 || gui->aiInputFocus == 3))
+      gui->aiInputFocus == 3)
     gui->aiInputFocus = 0;
 
   if (click && !clickedField)
@@ -286,7 +319,8 @@ void AiSettingsUiUpdate(GuiState *gui, int sw, int sh) {
 
   gui->isTyping = gui->aiInputFocus != 0;
   if (gui->aiInputFocus == 1 &&
-      gui->aiProvider == AI_PROVIDER_LOCAL) {
+      (gui->aiProvider == AI_PROVIDER_LOCAL ||
+       gui->aiProvider == AI_PROVIDER_OPENAI)) {
     bool selectAll = gui->aiSelectAllField == 1;
     selectAll = InputText(gui->aiModel, sizeof(gui->aiModel), selectAll);
     gui->aiSelectAllField = selectAll ? 1 : 0;

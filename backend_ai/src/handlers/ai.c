@@ -144,6 +144,30 @@ static void BuildLocalUrl(const char *base, char *out, size_t out_sz) {
   snprintf(out, out_sz, "%s%s", clean, suffix);
 }
 
+static void BuildOpenAIUrl(const char *base, char *out, size_t out_sz) {
+  if (!out || out_sz == 0)
+    return;
+  out[0] = '\0';
+  if (!base || base[0] == '\0')
+    base = "https://api.openai.com/v1";
+
+  char clean[512];
+  StripTrailingSlash(base, clean, sizeof(clean));
+  if (clean[0] == '\0')
+    strncpy(clean, "https://api.openai.com/v1", sizeof(clean) - 1);
+  clean[sizeof(clean) - 1] = '\0';
+
+  if (HasChatCompletions(clean)) {
+    size_t n = strnlen(clean, out_sz - 1);
+    memcpy(out, clean, n);
+    out[n] = '\0';
+    return;
+  }
+
+  const char *suffix = HasV1Segment(clean) ? "/chat/completions" : "/v1/chat/completions";
+  snprintf(out, out_sz, "%s%s", clean, suffix);
+}
+
 static const char *StripImagePrefix(const char *image) {
   if (!image)
     return NULL;
@@ -274,6 +298,70 @@ static bool SendGemini(const char *model,
   return *out_text != NULL;
 }
 
+static bool SendOpenAI(const char *model,
+                       const char *prompt,
+                       const char *image,
+                       const char *base_url,
+                       const char *api_key,
+                       char **out_text,
+                       char *err,
+                       size_t err_sz) {
+  if (!api_key || api_key[0] == '\0') {
+    if (err && err_sz > 0)
+      snprintf(err, err_sz, "Missing apiKey");
+    return false;
+  }
+  const char *b64 = StripImagePrefix(image);
+  if (!b64 || b64[0] == '\0') {
+    if (err && err_sz > 0)
+      snprintf(err, err_sz, "Missing image data");
+    return false;
+  }
+  char url[512];
+  BuildOpenAIUrl(base_url, url, sizeof(url));
+  char *prompt_esc = JsonEscape(prompt);
+  char *model_esc = JsonEscape(model);
+  if (!prompt_esc || !model_esc) {
+    free(prompt_esc);
+    free(model_esc);
+    if (err && err_sz > 0)
+      snprintf(err, err_sz, "prompt escape failed");
+    return false;
+  }
+  size_t body_sz = strlen(prompt_esc) + strlen(model_esc) + strlen(b64) + 512;
+  char *body = (char *)malloc(body_sz);
+  if (!body) {
+    free(prompt_esc);
+    free(model_esc);
+    return false;
+  }
+  snprintf(body, body_sz,
+           "{\"model\":\"%s\",\"messages\":[{\"role\":\"user\",\"content\":["
+           "{\"type\":\"text\",\"text\":\"%s\"},"
+           "{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,%s\"}}]}],"
+           "\"temperature\":0.2}",
+           model_esc, prompt_esc, b64);
+  DebugLogUpstream("openai", url, strlen(body));
+  char *resp = NULL;
+  bool ok = HttpPostJson(url, body, api_key, &resp, err, err_sz);
+  free(body);
+  free(prompt_esc);
+  free(model_esc);
+  if (!ok)
+    return false;
+  char text[4096] = {0};
+  bool found = JsonFindString(resp, "content", text, sizeof(text));
+  if (!found) {
+    free(resp);
+    if (err && err_sz > 0)
+      snprintf(err, err_sz, "parse failed");
+    return false;
+  }
+  *out_text = strdup(text);
+  free(resp);
+  return *out_text != NULL;
+}
+
 void HandleAiAnalyze(const HttpRequest *req, HttpResponse *res) {
   if (!req || !res)
     return;
@@ -306,8 +394,12 @@ void HandleAiAnalyze(const HttpRequest *req, HttpResponse *res) {
   char err[128] = {0};
   char *text = NULL;
   bool ok = false;
-  if (strcmp(provider, "local") == 0 || strcmp(provider, "openai") == 0) {
+  if (strcmp(provider, "local") == 0) {
     ok = SendLocal(model, prompt, base_url, api_key, &text, err, sizeof(err));
+    if (!ok)
+      RespondError(res, 502, err[0] ? err : "upstream failed");
+  } else if (strcmp(provider, "openai") == 0 || strcmp(provider, "chatgpt") == 0) {
+    ok = SendOpenAI(model, prompt, image, base_url, api_key, &text, err, sizeof(err));
     if (!ok)
       RespondError(res, 502, err[0] ? err : "upstream failed");
   } else if (strcmp(provider, "gemini") == 0) {

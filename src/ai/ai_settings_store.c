@@ -53,7 +53,11 @@ static void EnsureDirs(void) {
 }
 
 static const char *ProviderName(AiProvider p) {
-  return (p == AI_PROVIDER_LOCAL) ? "local" : "gemini";
+  if (p == AI_PROVIDER_LOCAL)
+    return "local";
+  if (p == AI_PROVIDER_OPENAI)
+    return "openai";
+  return "gemini";
 }
 
 bool AiSettingsSave(const AiSettings *s,
@@ -112,6 +116,17 @@ bool AiSettingsReady(const AiSettings *s,
     if (s->api_key[0] == '\0') {
       if (err && err_sz > 0)
         snprintf(err, err_sz, "Missing apiKey");
+      return false;
+    }
+  } else if (s->provider == AI_PROVIDER_OPENAI) {
+    if (s->api_key[0] == '\0') {
+      if (err && err_sz > 0)
+        snprintf(err, err_sz, "Missing apiKey");
+      return false;
+    }
+    if (s->base_url[0] == '\0') {
+      if (err && err_sz > 0)
+        snprintf(err, err_sz, "Missing baseUrl");
       return false;
     }
   } else {

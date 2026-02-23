@@ -196,6 +196,71 @@ bool AiAnalyzeCanvas(const Canvas *canvas,
     }
     if (ok)
       ok = ExtractTextBackend(resp, out, out_sz);
+  } else if (settings->provider == AI_PROVIDER_OPENAI) {
+    unsigned char *png = NULL;
+    size_t png_sz = 0;
+    if (!AiCapturePng(canvas, &png, &png_sz,
+                      err, err_sz)) {
+      free(prompt_esc);
+      return false;
+    }
+    size_t b64_sz = 0;
+    char *b64 = AiBase64Encode(png, png_sz, &b64_sz);
+    free(png);
+    if (!b64) {
+      free(prompt_esc);
+      return false;
+    }
+
+    char *model_esc = AiJsonEscape(settings->model);
+    char *key_esc = AiJsonEscape(settings->api_key);
+    char *base_esc = AiJsonEscape(settings->base_url);
+    if (!model_esc || !key_esc || !base_esc) {
+      free(prompt_esc);
+      free(b64);
+      free(model_esc);
+      free(key_esc);
+      free(base_esc);
+      return false;
+    }
+
+    size_t body_sz = strlen(prompt_esc) +
+                     strlen(model_esc) +
+                     strlen(key_esc) +
+                     strlen(base_esc) +
+                     b64_sz + 512;
+    char *body = (char *)malloc(body_sz);
+    if (!body) {
+      free(prompt_esc);
+      free(b64);
+      free(model_esc);
+      free(key_esc);
+      free(base_esc);
+      return false;
+    }
+    snprintf(body, body_sz,
+             "{\"provider\":\"openai\",\"model\":\"%s\","
+             "\"prompt\":\"%s\",\"image\":\"data:image/png;base64,%s\","
+             "\"api_key\":\"%s\",\"base_url\":\"%s\"}",
+             model_esc, prompt_esc, b64, key_esc, base_esc);
+    DebugPrintBackendRequest("openai", url, body);
+    ok = AiHttpPostJson(url, body, NULL,
+                        resp, sizeof(resp),
+                        err, err_sz);
+    free(body);
+    free(b64);
+    free(model_esc);
+    free(key_esc);
+    free(base_esc);
+    if (resp[0] != '\0')
+      DebugPrintResponse(resp);
+    if (!ok && err && err_sz > 0) {
+      char msg[256];
+      if (ExtractErrorBackend(resp, msg, sizeof(msg)))
+        snprintf(err, err_sz, "%s", msg);
+    }
+    if (ok)
+      ok = ExtractTextBackend(resp, out, out_sz);
   } else {
     char *model_esc = AiJsonEscape(settings->model);
     char *prompt_copy = prompt_esc;

@@ -6,7 +6,8 @@
 
 typedef enum {
   AI_PROVIDER_GEMINI = 0,
-  AI_PROVIDER_LOCAL
+  AI_PROVIDER_LOCAL,
+  AI_PROVIDER_OPENAI
 } AiProvider;
 
 typedef struct {

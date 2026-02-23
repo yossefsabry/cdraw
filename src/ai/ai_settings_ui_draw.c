@@ -5,6 +5,7 @@
 typedef struct {
   Rectangle panel;
   Rectangle provGem;
+  Rectangle provOpen;
   Rectangle provLocal;
   Rectangle model;
   Rectangle key;
@@ -64,13 +65,16 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   float fy = y + 58.0f;
   float fw = w - pad * 2.0f;
   float gap = 10.0f;
-  float half = (fw - gap) * 0.5f;
+  float third = (fw - gap * 2.0f) / 3.0f;
 
-  l.provGem = (Rectangle){fx, fy, half, row};
-  l.provLocal = (Rectangle){fx + half + gap,
-                            fy, half, row};
+  l.provGem = (Rectangle){fx, fy, third, row};
+  l.provOpen = (Rectangle){fx + third + gap,
+                           fy, third, row};
+  l.provLocal = (Rectangle){fx + (third + gap) * 2.0f,
+                            fy, third, row};
   fy += row + 30.0f;
-  bool showModel = provider == AI_PROVIDER_LOCAL;
+  bool showModel = provider == AI_PROVIDER_LOCAL ||
+                   provider == AI_PROVIDER_OPENAI;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
   l.base = (Rectangle){0, 0, 0, 0};
@@ -205,6 +209,9 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
   Btn(gui, l.provGem, "Gemini", t,
       gui->aiProvider ==
       AI_PROVIDER_GEMINI);
+  Btn(gui, l.provOpen, "OpenAI", t,
+      gui->aiProvider ==
+      AI_PROVIDER_OPENAI);
   Btn(gui, l.provLocal, "Local", t,
       gui->aiProvider ==
       AI_PROVIDER_LOCAL);
@@ -218,12 +225,15 @@ void AiSettingsUiDraw(GuiState *gui, Theme t,
   const char *keyLabel =
       (gui->aiProvider == AI_PROVIDER_LOCAL)
           ? "API key (optional)"
-          : "API key";
+          : (gui->aiProvider == AI_PROVIDER_OPENAI)
+                ? "OpenAI API key"
+                : "API key";
   const char *baseLabel =
       (gui->aiProvider == AI_PROVIDER_LOCAL)
           ? "Base URL (OpenAI /v1)"
           : "Base URL";
-  if (gui->aiProvider == AI_PROVIDER_LOCAL) {
+  if (gui->aiProvider == AI_PROVIDER_LOCAL ||
+      gui->aiProvider == AI_PROVIDER_OPENAI) {
     DrawField(gui, l.model, "Model",
               gui->aiModel,
               gui->aiInputFocus == 1,

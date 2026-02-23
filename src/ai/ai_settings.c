@@ -101,6 +101,8 @@ const char *AiProviderLabel(AiProvider provider) {
   switch (provider) {
   case AI_PROVIDER_LOCAL:
     return "Local";
+  case AI_PROVIDER_OPENAI:
+    return "OpenAI";
   case AI_PROVIDER_GEMINI:
   default:
     return "Gemini";
@@ -121,9 +123,10 @@ static void ParseLine(AiSettings *out, char *line) {
   char *key = Trim(line);
   char *val = Trim(eq + 1);
   if (StrEqI(key, "provider")) {
-    if (StrEqI(val, "local") ||
-        StrEqI(val, "openai"))
+    if (StrEqI(val, "local"))
       out->provider = AI_PROVIDER_LOCAL;
+    else if (StrEqI(val, "openai") || StrEqI(val, "chatgpt"))
+      out->provider = AI_PROVIDER_OPENAI;
     else if (StrEqI(val, "gemini"))
       out->provider = AI_PROVIDER_GEMINI;
   } else if (StrEqI(key, "model")) {
@@ -166,9 +169,10 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
     const char *p = getenv("CDRAW_AI_PROVIDER");
     if (p && p[0] != '\0') {
       envProvider = true;
-      if (StrEqI(p, "local") ||
-          StrEqI(p, "openai"))
+      if (StrEqI(p, "local"))
         out->provider = AI_PROVIDER_LOCAL;
+      else if (StrEqI(p, "openai") || StrEqI(p, "chatgpt"))
+        out->provider = AI_PROVIDER_OPENAI;
       else if (StrEqI(p, "gemini"))
         out->provider = AI_PROVIDER_GEMINI;
     }
@@ -218,6 +222,20 @@ bool AiSettingsLoad(AiSettings *out, char *err, size_t err_sz) {
     if (out->base_url[0] == '\0')
       StrCopy(out->base_url, sizeof(out->base_url),
               "http://localhost:11434/v1");
+    return true;
+  }
+  if (out->provider == AI_PROVIDER_OPENAI) {
+    if (out->model[0] == '\0')
+      StrCopy(out->model, sizeof(out->model), "gpt-4o-mini");
+    if (out->base_url[0] == '\0' ||
+        strcmp(out->base_url, "http://localhost:11434/v1") == 0)
+      StrCopy(out->base_url, sizeof(out->base_url),
+              "https://api.openai.com/v1");
+    if (out->api_key[0] == '\0') {
+      if (err && err_sz > 0)
+        snprintf(err, err_sz, "Missing apiKey in ai.cfg");
+      return false;
+    }
     return true;
   }
 

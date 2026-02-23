@@ -1,20 +1,45 @@
 #include "gui_internal.h"
+#include "raymath.h"
 
 void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
                    Color iconHover, int sw) {
-  Rectangle header = {0, 0, (float)sw, 40};
+  const float headerH = 40.0f;
+  Rectangle header = {0, 0, (float)sw, headerH};
   DrawRectangleRec(header, t.surface);
-  DrawLineEx((Vector2){0, 40}, (Vector2){(float)sw, 40}, 1, t.border);
+  DrawLineEx((Vector2){0, headerH}, (Vector2){(float)sw, headerH}, 1, t.border);
 
-  DrawCircle(20, 20, 6, (Color){239, 68, 68, 255});
-  DrawCircle(40, 20, 6, (Color){234, 179, 8, 255});
-  DrawCircle(60, 20, 6, (Color){34, 197, 94, 255});
+  float rightPad = 12.0f;
+  float rightGap = 8.0f;
+  float helpSize = 32.0f;
+  float darkSize = 26.0f;
+  float rightEdge = (float)sw - rightPad;
+  float darkX = rightEdge - darkSize;
+  float helpX = darkX - rightGap - helpSize;
 
-  float tabX = 90.0f;
-  float tabY = 8.0f;
-  float tabW = 150.0f;
+  float tabX = 16.0f;
   float tabH = 32.0f;
+  float tabY = (headerH - tabH) / 2.0f;
   float tabGap = 8.0f;
+  float newBtnW = 26.0f;
+  float newBtnH = 26.0f;
+  float newBtnY = (headerH - newBtnH) / 2.0f;
+
+  float tabAreaRight = helpX - 10.0f;
+  float tabAreaW = tabAreaRight - tabX;
+  if (tabAreaW < 0.0f)
+    tabAreaW = 0.0f;
+
+  float tabMaxW = 150.0f;
+  float tabMinW = sw < 600 ? 56.0f : (sw < 720 ? 68.0f : 90.0f);
+  float tabW = tabMaxW;
+  if (gui->documentCount > 0) {
+    float availableTabs = tabAreaW - newBtnW - tabGap;
+    if (availableTabs < 0.0f)
+      availableTabs = 0.0f;
+    float maxW = (availableTabs - (gui->documentCount - 1) * tabGap) /
+                 (float)gui->documentCount;
+    tabW = Clamp(maxW, tabMinW, tabMaxW);
+  }
 
   Vector2 mouse = GetMousePosition();
   for (int i = 0; i < gui->documentCount; i++) {
@@ -52,8 +77,11 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     }
   }
 
-  Rectangle newBtn = {tabX + gui->documentCount * (tabW + tabGap), 9, 26, 26};
-  if (GuiIconButton(gui, &gui->icons, newBtn, gui->icons.add, false, t.hover,
+  float newBtnX = tabX + gui->documentCount * (tabW + tabGap);
+  Rectangle newBtn = {newBtnX, newBtnY, newBtnW, newBtnH};
+  bool showNewBtn = newBtn.x + newBtn.width <= tabAreaRight;
+  if (showNewBtn &&
+      GuiIconButton(gui, &gui->icons, newBtn, gui->icons.add, false, t.hover,
                     t.hover, t.text, iconIdle, iconHover, "New canvas")) {
     Document *active = GuiGetActiveDocument(gui);
     bool showGrid = active ? active->canvas.showGrid : true;
@@ -67,16 +95,17 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
   float titleY = 14.0f;
   float titlePad = 6.0f;
 
-  float tabsRightEdge = tabX + gui->documentCount * (tabW + tabGap) + 26.0f;
-  bool titleBlocked = tabsRightEdge + 8.0f >= (titleX - titlePad);
-  if (!titleBlocked) {
+  float tabsRightEdge = tabX + gui->documentCount * (tabW + tabGap);
+  if (showNewBtn)
+    tabsRightEdge += newBtnW + tabGap;
+  float titleLeft = titleX - titlePad;
+  float titleRight = titleX + vSize.x + titlePad;
+  bool titleBlocked = titleLeft <= tabsRightEdge + 8.0f ||
+                      titleRight >= helpX - 8.0f;
+  if (!titleBlocked)
     DrawTextEx(gui->uiFont, vText, (Vector2){titleX, titleY}, 12, 1.0f, t.textDim);
-  }
 
-  float rx = (float)sw - 120;
-  float helpSize = 32.0f;
-  float helpX = rx - helpSize - 10.0f;
-  Rectangle helpBtn = {helpX, 4, helpSize, helpSize};
+  Rectangle helpBtn = {helpX, (headerH - helpSize) / 2.0f, helpSize, helpSize};
   gui->helpButtonRect = helpBtn;
   bool helpHover = CheckCollisionPointRec(mouse, helpBtn);
   if (helpHover)
@@ -110,7 +139,7 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
 
   const char *themeTip =
       gui->darkMode ? "Switch to light mode" : "Switch to dark mode";
-  Rectangle darkBtn = {rx, 7, 26, 26};
+  Rectangle darkBtn = {darkX, (headerH - darkSize) / 2.0f, darkSize, darkSize};
   if (GuiIconButton(gui, &gui->icons, darkBtn,
                     gui->darkMode ? gui->icons.lightMode : gui->icons.darkMode,
                     false, t.hover, t.hover, t.text, iconIdle, iconHover,
@@ -118,25 +147,4 @@ void GuiDrawHeader(GuiState *gui, Canvas *canvas, Theme t, Color iconIdle,
     gui->darkMode = !gui->darkMode;
     GuiToastSet(gui, gui->darkMode ? "Dark mode." : "Light mode.");
   }
-
-  Rectangle minBtn = {rx + 30, 7, 26, 26};
-  if (GuiIconButton(gui, &gui->icons, minBtn, gui->icons.windowMinimize, false,
-                    t.hover, t.hover, t.text, iconIdle, iconHover, "Minimize"))
-    MinimizeWindow();
-
-  const char *maxTip =
-      IsWindowMaximized() ? "Restore window" : "Maximize window";
-  Rectangle maxBtn = {rx + 60, 7, 26, 26};
-  if (GuiIconButton(gui, &gui->icons, maxBtn, gui->icons.windowToggleSize, false,
-                    t.hover, t.hover, t.text, iconIdle, iconHover, maxTip)) {
-    if (IsWindowMaximized())
-      RestoreWindow();
-    else
-      MaximizeWindow();
-  }
-
-  Rectangle closeBtn = {rx + 90, 7, 26, 26};
-  if (GuiIconButton(gui, &gui->icons, closeBtn, gui->icons.windowClose, false,
-                    t.hover, t.hover, t.text, iconIdle, iconHover, "Close app"))
-    gui->requestExit = true;
 }

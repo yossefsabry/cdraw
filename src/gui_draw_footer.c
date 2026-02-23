@@ -93,19 +93,43 @@ void GuiDrawFooter(GuiState *gui, Canvas *canvas, Theme t, int sw, int sh) {
   int totalPoints = GetTotalPoints(canvas);
   const float fontSize = 12.0f;
   Color textColor = gui->darkMode ? t.text : t.textDim;
-  DrawTextEx(gui->uiFont,
-             TextFormat("Pos: %.0f, %.0f", mouseWorld.x, mouseWorld.y),
-             (Vector2){12, (float)sh - 20}, fontSize, 1.0f, textColor);
-  DrawTextEx(gui->uiFont, TextFormat("Zoom: %.2f", canvas->camera.zoom),
-             (Vector2){150, (float)sh - 20}, fontSize, 1.0f, textColor);
-  DrawTextEx(gui->uiFont, TextFormat("FPS: %d", GetFPS()),
-             (Vector2){280, (float)sh - 20}, fontSize, 1.0f, textColor);
-  DrawTextEx(gui->uiFont, TextFormat("Strokes: %d", canvas->strokeCount),
-             (Vector2){(float)sw - 230, (float)sh - 20}, fontSize, 1.0f,
-             textColor);
-  DrawTextEx(gui->uiFont, TextFormat("Points: %d", totalPoints),
-             (Vector2){(float)sw - 110, (float)sh - 20}, fontSize, 1.0f,
-             textColor);
+
+  char posText[64];
+  char zoomText[32];
+  char fpsText[24];
+  char strokesText[32];
+  char pointsText[32];
+  snprintf(posText, sizeof(posText), "Pos: %.0f, %.0f", mouseWorld.x, mouseWorld.y);
+  snprintf(zoomText, sizeof(zoomText), "Zoom: %.2f", canvas->camera.zoom);
+  snprintf(fpsText, sizeof(fpsText), "FPS: %d", GetFPS());
+  snprintf(strokesText, sizeof(strokesText), "Strokes: %d", canvas->strokeCount);
+  snprintf(pointsText, sizeof(pointsText), "Points: %d", totalPoints);
+
+  float leftX = 12.0f;
+  float rightX = (float)sw - 12.0f;
+  float y = (float)sh - 20.0f;
+  float gap = 12.0f;
+
+  const char *rightItems[] = {pointsText, strokesText};
+  for (int i = 0; i < 2; i++) {
+    Vector2 size = MeasureTextEx(gui->uiFont, rightItems[i], fontSize, 1.0f);
+    if (rightX - size.x < leftX + 20.0f)
+      continue;
+    rightX -= size.x;
+    DrawTextEx(gui->uiFont, rightItems[i], (Vector2){rightX, y}, fontSize, 1.0f,
+               textColor);
+    rightX -= gap;
+  }
+
+  const char *leftItems[] = {posText, zoomText, fpsText};
+  for (int i = 0; i < 3; i++) {
+    Vector2 size = MeasureTextEx(gui->uiFont, leftItems[i], fontSize, 1.0f);
+    if (leftX + size.x > rightX - 8.0f)
+      break;
+    DrawTextEx(gui->uiFont, leftItems[i], (Vector2){leftX, y}, fontSize, 1.0f,
+               textColor);
+    leftX += size.x + gap;
+  }
 
   gui->aiQuickButtonRect = (Rectangle){0, 0, 0, 0};
   if (gui->aiReady) {
