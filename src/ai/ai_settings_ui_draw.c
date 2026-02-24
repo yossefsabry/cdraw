@@ -79,8 +79,9 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
                             fy, third, row};
   fy += row + 30.0f;
   bool showModel = provider == AI_PROVIDER_LOCAL ||
-                   provider == AI_PROVIDER_OPENAI ||
-                   provider == AI_PROVIDER_GEMINI;
+                   provider == AI_PROVIDER_OPENAI;
+  bool showPresets = provider == AI_PROVIDER_OPENAI ||
+                     provider == AI_PROVIDER_GEMINI;
   bool showBase = provider == AI_PROVIDER_LOCAL;
   l.model = (Rectangle){0, 0, 0, 0};
   l.preset4o = (Rectangle){0, 0, 0, 0};
@@ -90,17 +91,17 @@ static AiUiLayout Layout(int sw, int sh, int provider) {
   if (showModel) {
     l.model = (Rectangle){fx, fy, fw, field};
     fy += field;
-    if (provider == AI_PROVIDER_OPENAI ||
-        provider == AI_PROVIDER_GEMINI) {
-      fy += 12.0f;
-      float pw = (fw - presetGap * 2.0f) / 3.0f;
-      l.preset4o = (Rectangle){fx, fy, pw, presetRow};
-      l.preset4oMini = (Rectangle){fx + pw + presetGap, fy, pw, presetRow};
-      l.preset41Mini = (Rectangle){fx + (pw + presetGap) * 2.0f, fy, pw, presetRow};
-      fy += presetRow + fieldGap;
-    } else {
-      fy += fieldGap;
-    }
+  }
+  if (showPresets) {
+    float presetTopPad = showModel ? 12.0f : 0.0f;
+    fy += presetTopPad;
+    float pw = (fw - presetGap * 2.0f) / 3.0f;
+    l.preset4o = (Rectangle){fx, fy, pw, presetRow};
+    l.preset4oMini = (Rectangle){fx + pw + presetGap, fy, pw, presetRow};
+    l.preset41Mini = (Rectangle){fx + (pw + presetGap) * 2.0f, fy, pw, presetRow};
+    fy += presetRow + fieldGap;
+  } else if (showModel) {
+    fy += fieldGap;
   }
   l.key = (Rectangle){fx, fy, fw, field};
   fy += field;
