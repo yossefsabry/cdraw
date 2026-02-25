@@ -1,6 +1,12 @@
+#include "app_paths.h"
 #include "gui_internal.h"
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 typedef struct {
   const char *name;
@@ -22,7 +28,9 @@ static void SetIconSrc(GuiIcon *icon, int index) {
 }
 
 static void IconPath(char *buf, size_t bufSize, const char *basename) {
-  snprintf(buf, bufSize, "assets/ui_icons/%s.png", basename);
+  char rel[256];
+  snprintf(rel, sizeof(rel), "assets/ui_icons/%s.png", basename);
+  CdrawAssetPath(buf, bufSize, rel);
 }
 
 static bool AtlasIsStale(const char *atlasPath, const IconEntry entries[],
@@ -34,7 +42,7 @@ static bool AtlasIsStale(const char *atlasPath, const IconEntry entries[],
   if (atlasTime <= 0)
     return true;
 
-  char path[256];
+  char path[PATH_MAX];
   for (int i = 0; i < count; i++) {
     IconPath(path, sizeof(path), entries[i].name);
     if (!FileExists(path))
@@ -54,7 +62,7 @@ static Texture2D BuildAtlas(const char *atlasPath, const IconEntry entries[],
       GenImageColor(ICON_COLS * cell, rows * cell, (Color){0, 0, 0, 0});
 
   for (int i = 0; i < count; i++) {
-    char path[256];
+    char path[PATH_MAX];
     IconPath(path, sizeof(path), entries[i].name);
     if (!FileExists(path))
       continue;
@@ -119,7 +127,8 @@ void GuiIconsLoad(GuiIcons *icons) {
   for (int i = 0; i < count; i++)
     SetIconSrc(entries[i].icon, i);
 
-  const char *atlasPath = "assets/ui_icons/atlas.png";
+  char atlasPath[PATH_MAX];
+  CdrawAssetPath(atlasPath, sizeof(atlasPath), "assets/ui_icons/atlas.png");
   if (!AtlasIsStale(atlasPath, entries, count)) {
     icons->atlas = LoadTexture(atlasPath);
   }

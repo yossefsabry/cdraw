@@ -1,10 +1,16 @@
+#include "app_paths.h"
 #include "canvas.h"
 #include "gui.h"
 #include "prefs.h"
 #include "raylib.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 #if !defined(_WIN32)
 #include <arpa/inet.h>
@@ -41,13 +47,19 @@ static bool BackendCanConnect(void) {
 }
 
 static void StartBackend(void) {
+  char backendPath[PATH_MAX];
+  if (!CdrawBackendPath(backendPath, sizeof(backendPath))) {
+    fprintf(stderr, "Backend binary not found; skipping start\n");
+    return;
+  }
+
   pid_t pid = fork();
   if (pid < 0) {
     fprintf(stderr, "Backend start failed: %s\n", strerror(errno));
     return;
   }
   if (pid == 0) {
-    execl("./backend_ai/backend_ai", "backend_ai", NULL);
+    execl(backendPath, backendPath, NULL);
     fprintf(stderr, "Backend exec failed: %s\n", strerror(errno));
     _exit(1);
   }

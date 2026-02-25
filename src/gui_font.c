@@ -1,5 +1,11 @@
+#include "app_paths.h"
 #include "gui_internal.h"
+#include <limits.h>
 #include <stdlib.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 static Font TryLoadFont(const char *path, int baseSize, bool *outOwned) {
   if (outOwned)
@@ -39,10 +45,26 @@ void GuiFontLoad(GuiState *gui) {
     }
   }
 
-  const char *candidates[] = {
+  const char *assetCandidates[] = {
       "assets/fonts/Inter-Regular.ttf",
       "assets/fonts/Roboto-Regular.ttf",
       "assets/fonts/DejaVuSans.ttf",
+  };
+
+  const int assetCount = (int)(sizeof(assetCandidates) / sizeof(assetCandidates[0]));
+  for (int i = 0; i < assetCount; i++) {
+    char path[PATH_MAX];
+    CdrawAssetPath(path, sizeof(path), assetCandidates[i]);
+    bool owned = false;
+    Font f = TryLoadFont(path, baseSize, &owned);
+    if (f.texture.id != 0) {
+      gui->uiFont = f;
+      gui->ownsUiFont = owned;
+      return;
+    }
+  }
+
+  const char *systemCandidates[] = {
       "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
       "/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf",
       "/usr/share/fonts/TTF/DejaVuSans.ttf",
@@ -62,10 +84,11 @@ void GuiFontLoad(GuiState *gui) {
       "C:\\Windows\\Fonts\\arial.ttf",
   };
 
-  const int count = (int)(sizeof(candidates) / sizeof(candidates[0]));
-  for (int i = 0; i < count; i++) {
+  const int systemCount =
+      (int)(sizeof(systemCandidates) / sizeof(systemCandidates[0]));
+  for (int i = 0; i < systemCount; i++) {
     bool owned = false;
-    Font f = TryLoadFont(candidates[i], baseSize, &owned);
+    Font f = TryLoadFont(systemCandidates[i], baseSize, &owned);
     if (f.texture.id != 0) {
       gui->uiFont = f;
       gui->ownsUiFont = owned;
